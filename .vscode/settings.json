@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "./Classes/Subclasses/Pessoas",
+        "./Classes/Subclasses/Animais",
+        "./Classes/Classes abstratas"
+    ]
+}
