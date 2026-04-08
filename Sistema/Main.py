@@ -9,54 +9,64 @@ from Classes.Subclasses.Pessoas import *
 
 
 def Main():
+    
+    Op = -1
 
-    Op = 0
+    while Op != "4":
+        LimparTela()
+        CriarMenuPrincipal()
+        Op = input("\nDigite a opção desejada: ")
+         
+        LimparTela()
 
-    while Op != "6":
-        CriarMenu()
-        Op = input("Digite a opção desejada: ")
 
         if Op == "0":
-            print("Opção 0 selecionada: Adicionar Usuário, Cliente ou Animal")
-            # Aqui você pode adicionar a lógica para cadastrar um novo usuário, cliente ou animal
+            CriarMenuCadastrar()
 
         elif Op == "1":
-            print("Opção 1 selecionada: Listar Usuários, Clientes e Animais")
-            # Aqui você pode adicionar a lógica para listar os usuários, clientes e animais cadastrados
+            pass
+
+        elif Op == "2":
+            pass
+
+        elif Op == "3":
+            pass
 
         elif Op == "4":
-            print("Opção 4 selecionada: Remover Usuário, Cliente ou Animal")
-            # Aqui você pode adicionar a lógica para remover um usuário, cliente ou animal
-
-        elif Op == "5":
-            print("Opção 5 selecionada: Editar Usuário, Cliente ou Animal")
-            # Aqui você pode adicionar a lógica para editar um usuário, cliente ou animal
-
-        elif Op == "6":
             print("Encerrando o programa. Até logo!")
             break
 
         else:
-            LimparTela()
             print("Opção inválida. Por favor, tente novamente.")
             Pausar()
             LimparTela()
 
 
 
+def CriarMenuCadastrar():
+
+    opCadastrar = -1
+
+    print("=======================\n\tCadastrar\n=======================\n")
+    print("0 - Cadastrar Usuário")
+    print("1 - Cadastrar Cliente")
+    print("2 - Cadastrar Animal")
+    print("3 - Cadastrar Servico")
+    opCadastrar = input("\nDigite o que deseja cadastrar: ")
+
+    if opCadastrar not in ["0", "1", "2", "3"]:
+        LimparTela()
+        print("Opção inválida. Retornando ao menu principal.")
+        Pausar()
 
 
-    CriarMenu()
-
-
-
-def CriarMenu():
+def CriarMenuPrincipal():
     print("=======================\n\tERPet\n=======================\n")
-    print("0 - Adicionar Usuário, Cliente ou Animal")
-    print("1 - Listar Usuários, Clientes e Animais")
-    print("4 - Remover Usuário, Cliente ou Animal")
-    print("5 - Editar Usuário, Cliente ou Animal")
-    print("6 - Encerrar")
+    print("0 - Cadastrar")
+    print("1 - Listar")
+    print("2 - Remover")
+    print("3 - Editar")
+    print("4 - Encerrar Programa")
 
 def LimparTela():
     os.system('cls' if os.name == 'nt' else 'clear')
