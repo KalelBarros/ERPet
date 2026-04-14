@@ -54,10 +54,25 @@ def CriarMenuCadastrar():
     print("3 - Cadastrar Servico")
     opCadastrar = input("\nDigite o que deseja cadastrar: ")
 
-    if opCadastrar not in ["0", "1", "2", "3"]:
-        LimparTela()
-        print("Opção inválida. Retornando ao menu principal.")
-        Pausar()
+    if opCadastrar == "0":
+       adm = input("\nvocê é um administrador? S/N ")
+       if resposta == 's' or resposta == 'S':
+         criar_usuario()
+       else:
+         return "você não tem autorização para adicionar um usuario" 
+    elif opCadastrar == "1"
+        us = input("\nvocê é um funcionario? S/N ")
+        if resposta == 's' or resposta == 'S':
+            CadastrarCliente()
+        else:
+            return "você não tem autorização para adicionar um cliente" 
+     elif opCadastrar == "2"
+        us = input("\nvocê é um funcionario? S/N ")
+        if resposta == 's' or resposta == 'S':
+            CadastrarAnimal()
+        else:
+            return "você não tem autorização para adicionar um animal" 
+       
 
 
 def CriarMenuPrincipal():
@@ -74,5 +89,6 @@ def LimparTela():
 def Pausar():
     input("Pressione Enter para continuar...")
 
+def Listar():
 
 Main()
