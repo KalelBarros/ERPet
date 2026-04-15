@@ -72,6 +72,7 @@ def CriarMenuCadastrar():
             CadastrarAnimal()
         else:
             return "você não tem autorização para adicionar um animal" 
+            
        
 
 
