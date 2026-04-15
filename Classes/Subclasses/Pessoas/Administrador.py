@@ -1,9 +1,10 @@
 from Usuario import Usuario
+from Sistema import Sistema
 
 class Administrador(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
         super().__init__(id, nome, email, telefone, cpf, senha, is_superuser=True)
-
+        
     def criar_usuario(self, id, nome, email, telefone, cpf, senha):
         id_user = input("Digite o ID: ")
         nome = input("Digite o nome: ")
@@ -26,4 +27,3 @@ class Administrador(Usuario):
         pass
 
     
-
