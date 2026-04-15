@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from Classes.Subclasses.Animais import *
 from Classes.Subclasses.Pessoas import *
-
+from Classes.Subclasses.Administrador import *
 
 def Main():
     
@@ -56,19 +56,19 @@ def CriarMenuCadastrar():
 
     if opCadastrar == "0":
        adm = input("\nvocê é um administrador? S/N ")
-       if resposta == 's' or resposta == 'S':
+       if adm == 's' or adm == 'S':
          criar_usuario()
        else:
          return "você não tem autorização para adicionar um usuario" 
-    elif opCadastrar == "1"
+    elif opCadastrar == "1":
         us = input("\nvocê é um funcionario? S/N ")
-        if resposta == 's' or resposta == 'S':
+        if us == 's' or us == 'S':
             CadastrarCliente()
         else:
             return "você não tem autorização para adicionar um cliente" 
-     elif opCadastrar == "2"
+    elif opCadastrar == "2":
         us = input("\nvocê é um funcionario? S/N ")
-        if resposta == 's' or resposta == 'S':
+        if us == 's' or us == 'S':
             CadastrarAnimal()
         else:
             return "você não tem autorização para adicionar um animal" 
@@ -92,4 +92,3 @@ def Pausar():
 
 def Listar():
 
-Main()
