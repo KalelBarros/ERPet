@@ -5,7 +5,6 @@ from Classes.Subclasses.Animais.Felino import Felino
 from Classes.Subclasses.Animais.Ave import Ave
 from Classes.Subclasses.Animais.Roedor import Roedor
 from Sistema.Sistema import Sistema
-import re
 
 class Funcionario(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
@@ -62,41 +61,43 @@ class Funcionario(Usuario):
         id_dono = Funcionario.input_obrigatorio("Digite o ID do dono do animal: ")
 
         if tipo == "Canino":
-            porte = Funcionario.input_obrigatorio("Digite o porte (Pequeno, Médio, Grande): ")
-            is_vacinado = Funcionario.input_obrigatorio("O canino é vacinado? (Sim/Não): ")
-            is_castrado = Funcionario.input_obrigatorio("O canino é castrado? (Sim/Não): ")
-            tipo_pelo = Funcionario.input_obrigatorio("Digite o tipo de pelo: ")
+            porte = input("Digite o porte do canino (Pequeno, Médio, Grande): ")
+            is_vacinado = input("O canino é vacinado? (Sim/Não): ")
+            is_castrado = input("O canino é castrado? (Sim/Não): ")
+            tipo_pelo = input("Digite o tipo de pelo do canino (Curto, Médio, Longo): ")
 
             animal = Canino(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, porte, is_vacinado, is_castrado, tipo_pelo)
             Sistema.Cadastrar(animal)
 
         elif tipo == "Felino":
-            is_castrado = Funcionario.input_obrigatorio("O felino é castrado? (Sim/Não): ")
-            tipo_pelo = Funcionario.input_obrigatorio("Digite o tipo de pelo (Curto/Longo): ")
+            porte = input("Digite o porte do felino (Pequeno, Médio, Grande): ")
+            is_vacinado = input("O felino é vacinado? (Sim/Não): ")
+            is_castrado = input("O felino é castrado? (Sim/Não): ")
+            tipo_pelo = input("Digite o tipo de pelo do felino (Curto, Médio, Longo): ")
 
             animal = Felino(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, is_castrado, tipo_pelo)
             Sistema.Cadastrar(animal)
 
         elif tipo == "Ave":
-            anilha = Funcionario.input_obrigatorio("Digite o número da anilha: ")
-            is_asas_cortadas = Funcionario.input_obrigatorio("A ave tem asas cortadas? (Sim/Não): ")
+            anilha = input("Digite o número da anilha da ave: ")
+            is_asas_cortadas = input("A ave tem asas cortadas? (Sim/Não): ")
 
             animal = Ave(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, anilha, is_asas_cortadas)
             Sistema.Cadastrar(animal)
 
         elif tipo == "Roedor":
-            especie = Funcionario.input_obrigatorio("Digite a espécie do roedor: ")
-            substrato = Funcionario.input_obrigatorio("Digite o tipo de substrato: ")
+            tipo_roedor = input("Digite o tipo do roedor (Hamster, Porquinho-da-índia, Rato, Camundongo): ")
 
             animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, especie, substrato)
             Sistema.Cadastrar(animal)
 
+            
     def CadastrarServico():
         print("--- Cadastrar Serviço (Banho/Tosa) ---")
-        id_servico = Funcionario.input_obrigatorio("Digite o ID do serviço: ")
+        id_servico = input("Digite o ID do serviço: ")
         
         print("Tipos disponíveis: 1 - Banho, 2 - Tosa, 3 - Banho e Tosa")
-        op_tipo = Funcionario.input_obrigatorio("Escolha o tipo: ")
+        op_tipo = input("Escolha o tipo: ")
         if op_tipo == "1":
             tipo = "Banho"
         elif op_tipo == "2":
@@ -104,10 +105,14 @@ class Funcionario(Usuario):
         else:
             tipo = "Banho e Tosa"
 
-        preco = float(Funcionario.input_obrigatorio("Digite o preço do serviço: "))
-        id_animal = Funcionario.input_obrigatorio("Digite o ID do animal: ")
-        id_funcionario = Funcionario.input_obrigatorio("Digite o ID do funcionário: ")
+        preco = float(input("Digite o preço do serviço: "))
+        id_animal = input("Digite o ID do animal: ")
+        id_funcionario = input("Digite o ID do funcionário: ")
 
+        # Importação local para evitar importação circular
         from Classes.Subclasses.Servicos.Servico import Servico
         novo_servico = Servico(id_servico, tipo, preco, id_animal, id_funcionario)
+
+        from Sistema.Sistema import Sistema
         Sistema.Cadastrar(novo_servico)
+    
