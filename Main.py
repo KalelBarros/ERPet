@@ -82,13 +82,6 @@ def Cadastrar():
             return "você não tem autorização para adicionar um animal" 
     elif opCadastrar == "3":
         us = input("\nvocê é um funcionario? S/N ")
-        if us == 's' or us == 'S':
-           Funcionario.Cadastrar()
-           Pausar()
-        else:
-             return "você não tem autorização para adicionar um serviço" 
-    elif opCadastrar == "3":
-        us = input("\nvocê é um funcionario? S/N ")
         if us.lower() == 's':
            Funcionario.CadastrarServico() 
            Pausar()
