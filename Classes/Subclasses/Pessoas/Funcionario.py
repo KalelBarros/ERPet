@@ -1,3 +1,4 @@
+from Classes.Classes_abstratas.Pessoa import Pessoa
 from Classes.Classes_abstratas.Usuario import Usuario 
 from Classes.Subclasses.Pessoas.Cliente import Cliente
 from Classes.Subclasses.Animais.Canino import Canino
@@ -19,13 +20,6 @@ class Funcionario(Usuario):
                 return valor
             print("Erro: Este campo é obrigatório e não pode ficar vazio.")
 
-    @staticmethod
-    def validar_cpf(cpf):
-        """Valida se o CPF tem 11 dígitos e não é uma sequência repetida."""
-        cpf = re.sub(r'\D', '', cpf)
-        if len(cpf) != 11 or cpf == cpf[0] * 11:
-            return False
-        return True
 
     def CadastrarCliente():
         print("--- Cadastrar Cliente ---")
@@ -36,9 +30,14 @@ class Funcionario(Usuario):
         
         while True:
             cpf = Funcionario.input_obrigatorio("Digite o CPF do cliente (apenas números): ")
-            if Funcionario.validar_cpf(cpf):
+            if Pessoa.validar_cpf(cpf):
                 break
             print("Erro: CPF inválido. Certifique-se de que tem 11 dígitos.")
+ 
+        #validar se há campos vazios
+        if not all([id, nome, email, telefone, cpf]):
+            print("Erro: Todos os campos são obrigatórios. Por favor, preencha todos os campos.")
+            return
 
         cliente = Cliente(id, nome, email, telefone, cpf)
         Sistema.Cadastrar(cliente)
@@ -60,11 +59,18 @@ class Funcionario(Usuario):
         historico = Funcionario.input_obrigatorio("Digite o histórico do animal: ")
         id_dono = Funcionario.input_obrigatorio("Digite o ID do dono do animal: ")
 
+        
+
         if tipo == "Canino":
             porte = input("Digite o porte do canino (Pequeno, Médio, Grande): ")
             is_vacinado = input("O canino é vacinado? (Sim/Não): ")
             is_castrado = input("O canino é castrado? (Sim/Não): ")
             tipo_pelo = input("Digite o tipo de pelo do canino (Curto, Médio, Longo): ")
+
+            if not all([id, nome, idade, sexo, raca, peso, cor, historico, id_dono, porte, is_vacinado, is_castrado, tipo_pelo]):
+                print("Erro: Todos os campos são obrigatórios. Por favor, preencha todos os campos.")
+                return
+
 
             animal = Canino(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, porte, is_vacinado, is_castrado, tipo_pelo)
             Sistema.Cadastrar(animal)
@@ -75,6 +81,10 @@ class Funcionario(Usuario):
             is_castrado = input("O felino é castrado? (Sim/Não): ")
             tipo_pelo = input("Digite o tipo de pelo do felino (Curto, Médio, Longo): ")
 
+            if not all([id, nome, idade, sexo, raca, peso, cor, historico, id_dono, is_vacinado, is_castrado, tipo_pelo]):
+                print("Erro: Todos os campos são obrigatórios. Por favor, preencha todos os campos.")
+                return
+
             animal = Felino(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, is_castrado, tipo_pelo)
             Sistema.Cadastrar(animal)
 
@@ -82,13 +92,22 @@ class Funcionario(Usuario):
             anilha = input("Digite o número da anilha da ave: ")
             is_asas_cortadas = input("A ave tem asas cortadas? (Sim/Não): ")
 
+            if not all([id, nome, idade, sexo, raca, peso, cor, historico, id_dono, anilha, is_asas_cortadas]):
+                print("Erro: Todos os campos são obrigatórios. Por favor, preencha todos os campos.")
+                return
+
             animal = Ave(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, anilha, is_asas_cortadas)
             Sistema.Cadastrar(animal)
 
         elif tipo == "Roedor":
             tipo_roedor = input("Digite o tipo do roedor (Hamster, Porquinho-da-índia, Rato, Camundongo): ")
+            substrato = input("Digite o tipo de substrato utilizado para o roedor: ")
+            
+            if not all([id, nome, idade, sexo, raca, peso, cor, historico, id_dono, tipo_roedor, substrato]):
+                print("Erro: Todos os campos são obrigatórios. Por favor, preencha todos os campos.")
+                return
 
-            animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, especie, substrato)
+            animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, tipo_roedor, substrato)
             Sistema.Cadastrar(animal)
 
             
@@ -112,6 +131,10 @@ class Funcionario(Usuario):
         # Importação local para evitar importação circular
         from Classes.Subclasses.Servicos.Servico import Servico
         novo_servico = Servico(id_servico, tipo, preco, id_animal, id_funcionario)
+
+        if not all([id_servico, tipo, preco, id_animal, id_funcionario]):
+            print("Erro: Todos os campos são obrigatórios. Por favor, preencha todos os campos.")
+            return
 
         from Sistema.Sistema import Sistema
         Sistema.Cadastrar(novo_servico)

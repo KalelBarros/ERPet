@@ -1,4 +1,5 @@
 from abc import ABC
+import re
 
 class Pessoa(ABC):
     def __init__(self, id, nome, email, telefone, cpf):
@@ -32,3 +33,11 @@ class Pessoa(ABC):
 
     def set_cpf(self, value):
         self.__cpf = value
+
+    @staticmethod
+    def validar_cpf(cpf):
+        """Valida se o CPF tem 11 dígitos e não é uma sequência repetida."""
+        cpf = re.sub(r'\D', '', cpf)
+        if len(cpf) != 11 or cpf == cpf[0] * 11:
+            return False
+        return True

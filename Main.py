@@ -174,6 +174,12 @@ def Editar():
     print("1 - Editar Cliente")
     print("2 - Editar Animal")
     
+    adm = input("\nvocê é um administrador? S/N ")
+    if not adm == 's' or adm == 'S':
+        print("Erro: Apenas administradores têm permissão para editar.")
+        Pausar()
+        return
+
     opEditar = input("\nEscolha o que deseja editar: ")
     LimparTela()
     
