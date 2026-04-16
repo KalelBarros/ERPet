@@ -70,5 +70,30 @@ class Funcionario(Usuario):
 
             animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, tipo_roedor)
             Sistema.Cadastrar(animal)
+    def CadastrarServico():
+        print("--- Cadastrar Serviço (Banho/Tosa) ---")
+        id_servico = input("Digite o ID do serviço: ")
+        
+        # Define as opções de tipo conforme solicitado
+        print("Tipos disponíveis: 1 - Banho, 2 - Tosa, 3 - Banho e Tosa")
+        op_tipo = input("Escolha o tipo: ")
+        if op_tipo == "1":
+            tipo = "Banho"
+        elif op_tipo == "2":
+            tipo = "Tosa"
+        else:
+            tipo = "Banho e Tosa"
+
+        preco = float(input("Digite o preço do serviço: "))
+        id_animal = input("Digite o ID do animal: ")
+        id_funcionario = input("Digite o ID do funcionário: ")
+
+        # Cria o objeto de serviço sem a lógica de produtos adicionais
+        from Classes.Subclasses.Servicos.Servico import Servico
+        novo_servico = Servico(id_servico, tipo, preco, id_animal, id_funcionario)
+
+        # Registra o serviço e salva no sistema
+        print(f"✔ Serviço '{tipo}' registrado com sucesso!")
+        Sistema.Cadastrar(novo_servico)
 
     
