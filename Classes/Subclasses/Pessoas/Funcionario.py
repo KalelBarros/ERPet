@@ -1,6 +1,10 @@
-from Cliente import Cliente
-from Usuario import Usuario
-from Sistema import Sistema
+from Classes.Classes_abstratas.Usuario import Usuario 
+from Classes.Subclasses.Pessoas.Cliente import Cliente
+from Classes.Subclasses.Animais.Canino import Canino
+from Classes.Subclasses.Animais.Felino import Felino
+from Classes.Subclasses.Animais.Ave import Ave
+from Classes.Subclasses.Animais.Roedor import Roedor
+from Sistema.Sistema import Sistema
 
 class Funcionario(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
@@ -37,7 +41,6 @@ class Funcionario(Usuario):
         id_dono = input("Digite o ID do dono do animal: ")
 
         if tipo == "Canino":
-            from Canino import Canino
             porte = input("Digite o porte do canino (Pequeno, Médio, Grande): ")
             is_vacinado = input("O canino é vacinado? (Sim/Não): ")
             is_castrado = input("O canino é castrado? (Sim/Não): ")
@@ -47,7 +50,6 @@ class Funcionario(Usuario):
             Sistema.Cadastrar(animal)
 
         elif tipo == "Felino":
-            from Felino import Felino
             porte = input("Digite o porte do felino (Pequeno, Médio, Grande): ")
             is_vacinado = input("O felino é vacinado? (Sim/Não): ")
             is_castrado = input("O felino é castrado? (Sim/Não): ")
@@ -57,7 +59,6 @@ class Funcionario(Usuario):
             Sistema.Cadastrar(animal)
 
         elif tipo == "Ave":
-            from Ave import Ave
             anilha = input("Digite o número da anilha da ave: ")
             is_asas_cortadas = input("A ave tem asas cortadas? (Sim/Não): ")
 
@@ -65,7 +66,6 @@ class Funcionario(Usuario):
             Sistema.Cadastrar(animal)
 
         elif tipo == "Roedor":
-            from Roedor import Roedor
             tipo_roedor = input("Digite o tipo do roedor (Hamster, Porquinho-da-índia, Rato, Camundongo): ")
 
             animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, tipo_roedor)

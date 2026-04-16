@@ -1,6 +1,6 @@
-from Usuario import Usuario
-from Animal import Animal
-from Cliente import Cliente
+from Classes.Subclasses.Pessoas.Cliente import Cliente
+from Classes.Classes_abstratas.Usuario import Usuario
+from Classes.Classes_abstratas.Animal import Animal
 
 class Sistema:
 
@@ -13,14 +13,13 @@ class Sistema:
 
         if isinstance(objeto, Cliente):
             Sistema.lista_clientes.append(objeto)
-            print(f"Cliente {objeto.nome} cadastrado com sucesso!")
-
+            print(f"Cliente {objeto.get_nome()} cadastrado com sucesso!")
         elif isinstance(objeto, Usuario):
             Sistema.lista_usuarios.append(objeto)
-            print(f"Usuário {objeto.nome} ({type(objeto).__name__}) cadastrado!")
+            print(f"Usuário {objeto.get_nome()} ({type(objeto).__name__}) cadastrado!")
         elif isinstance(objeto, Animal):
             Sistema.lista_animais.append(objeto)
-            print(f"Animal {objeto.nome} cadastrado com sucesso!")
+            print(f"Animal {objeto.get_nome()} cadastrado com sucesso!")
 
         else:
             print("Erro: Tipo de objeto desconhecido para o sistema.")
@@ -28,7 +27,7 @@ class Sistema:
     @staticmethod
     def Editar(lista_alvo, id_alvo, campo, novo_valor):
         # Busca o objeto pelo ID na lista fornecida (animais, clientes ou usuarios)
-        objeto = next((obj for obj in lista_alvo if obj.id == id_alvo), None)
+        objeto = next((obj for obj in lista_alvo if obj.get_id() == id_alvo), None)
 
         if objeto:
             # Verifica se o objeto tem o atributo que você quer mudar
@@ -43,7 +42,7 @@ class Sistema:
     @staticmethod
     def Excluir(lista_alvo, id_alvo):
         # Busca o objeto pelo ID na lista fornecida (animais, clientes ou usuarios)
-        objeto = next((obj for obj in lista_alvo if obj.id == id_alvo), None)
+        objeto = next((obj for obj in lista_alvo if obj.get_id() == id_alvo), None)
 
         if objeto:
             lista_alvo.remove(objeto)

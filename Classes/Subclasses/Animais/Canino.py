@@ -1,4 +1,4 @@
-from Animal import Animal
+from Classes.Classes_abstratas.Animal import Animal
 
 class Canino(Animal):
     def __init__(self, id, nome, idade, sexo, raca, peso, cor, historico, id_dono, porte, is_vacinado, is_castrado, tipo_pelo):
@@ -10,7 +10,7 @@ class Canino(Animal):
 
     def exibir_dados(self):
         super().exibir_dados()
-        print(f"Porte: {self.__porte} | Vacinado: {self.__is_vacinado} | Castrado: {self.__is_castrado} | Tipo Pelo: {self.tipo_pelo}")
+        print(f"Porte: {self.__porte} | Vacinado: {self.__is_vacinado} | Castrado: {self.__is_castrado} | Tipo Pelo: {self.__tipo_pelo}")
 
 
     def get_porte(self):        return self.__porte
