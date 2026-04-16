@@ -1,4 +1,4 @@
-from Animal import Animal
+from Classes.Classes_abstratas.Animal import Animal
 
 class Felino(Animal):
     def __init__(self, id, nome, idade, sexo, raca, peso, cor, historico, id_dono, is_castrado, tipo_pelo):

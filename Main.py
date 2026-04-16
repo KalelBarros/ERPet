@@ -1,12 +1,15 @@
 import sys
 import os
 
+
 # Adiciona a pasta raiz (ERPet) ao caminho de busca do Python
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Classes.Subclasses.Animais import *
-from Classes.Subclasses.Pessoas import *
-from Sistema import Sistema
+
+
+from Classes.Subclasses.Pessoas.Administrador import Administrador
+from Classes.Subclasses.Pessoas.Funcionario import Funcionario
+from Sistema.Sistema import Sistema
 
 def Main():
     
@@ -21,16 +24,18 @@ def Main():
 
 
         if Op == "0":
-            CriarMenuCadastrar()
+            Cadastrar()
 
         elif Op == "1":
+            Listar()
             pass
 
         elif Op == "2":
+            Editar()
             pass
 
         elif Op == "3":
-            pass
+            Remover()
 
         elif Op == "4":
             print("Encerrando o programa. Até logo!")
@@ -43,7 +48,7 @@ def Main():
 
 
 
-def CriarMenuCadastrar():
+def Cadastrar():
 
     opCadastrar = -1
 
@@ -58,26 +63,30 @@ def CriarMenuCadastrar():
        adm = input("\nvocê é um administrador? S/N ")
        if adm == 's' or adm == 'S':
         Administrador.criar_usuario()
+        Pausar()
        else:
          return "você não tem autorização para adicionar um usuario" 
     elif opCadastrar == "1":
         us = input("\nvocê é um funcionario? S/N ")
         if us == 's' or us == 'S':
             Funcionario.CadastrarCliente()
+            Pausar()
         else:
             return "você não tem autorização para adicionar um cliente" 
     elif opCadastrar == "2":
         us = input("\nvocê é um funcionario? S/N ")
         if us == 's' or us == 'S':
            Funcionario.CadastrarAnimal()
+           Pausar()
         else:
             return "você não tem autorização para adicionar um animal" 
-    elif opCadastrar == "2":
+    elif opCadastrar == "3":
         us = input("\nvocê é um funcionario? S/N ")
-        if us == 's' or us == 'S':
-           Funcionario.Cadastrar()
+        if us.lower() == 's':
+           Funcionario.CadastrarServico() 
+           Pausar()
         else:
-             return "você não tem autorização para adicionar um serviço" 
+             return "você não tem autorização para adicionar um serviço"
 def Listar():
     print("=======================\n\tListar\n=======================\n")
     print("0 - Listar Usuários")
@@ -140,9 +149,9 @@ def Remover():
     if opRemover == "0":
         adm = input("Você é um administrador? S/N ")
         if adm == 's'  or adm == 'S':
-            Administrador.excluir_usuario()
+            Administrador.excluir_entidade()
         else:
-            print("Erro: Apenas administradores têm permissão para excluir usuários.")
+            print("Erro: Apenas administradores têm permissão para excluir.")
     
     elif opRemover == "1":
         print("--- Remover Cliente ---")
@@ -159,15 +168,48 @@ def Remover():
 
     Pausar()
 
-def remover():
+def Editar():
+    print("=======================\n\tEditar\n=======================\n")
+    print("0 - Editar Usuário")
+    print("1 - Editar Cliente")
+    print("2 - Editar Animal")
     
+    opEditar = input("\nEscolha o que deseja editar: ")
+    LimparTela()
+    
+    if opEditar == "0":
+        id_usuario = input("ID do usuário: ")
+        campo = input("Campo (nome, email, telefone, cpf): ")
+        novo_valor = input(f"Novo valor para {campo}: ")
+        Sistema.Editar(Sistema.lista_usuarios, id_usuario, campo, novo_valor)
+        
+    elif opEditar == "1":
+        id_cliente = input("ID do cliente: ")
+        campo = input("Campo (nome, email, telefone, cpf): ")
+        novo_valor = input(f"Novo valor para {campo}: ")
+        Sistema.Editar(Sistema.lista_clientes, id_cliente, campo, novo_valor)
+        
+    elif opEditar == "2":
+        id_animal = input("ID do animal: ")
+        campo = input("Campo (nome, idade, peso, historico): ")
+        novo_valor = input(f"Novo valor para {campo}: ")
+        
+        # Converte para os tipos corretos antes de enviar
+        if campo == "idade":
+            novo_valor = int(novo_valor)
+        elif campo == "peso":
+            novo_valor = float(novo_valor)
+            
+        Sistema.Editar(Sistema.lista_animais, id_animal, campo, novo_valor)
 
+    Pausar()
+    
 def CriarMenuPrincipal():
     print("=======================\n\tERPet\n=======================\n")
     print("0 - Cadastrar")
     print("1 - Listar")
-    print("2 - Remover")
-    print("3 - Editar")
+    print("2 - Editar")
+    print("3 - Remover")
     print("4 - Encerrar Programa")
 
 def LimparTela():
@@ -175,3 +217,6 @@ def LimparTela():
 
 def Pausar():
     input("Pressione Enter para continuar...")
+
+
+Main()

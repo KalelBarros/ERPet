@@ -1,11 +1,13 @@
-from Usuario import Usuario
-from Sistema import Sistema
+from Classes.Subclasses.Pessoas.Funcionario import Funcionario
+from Classes.Classes_abstratas.Usuario import Usuario
+from Sistema.Sistema import Sistema
+
 
 class Administrador(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
         super().__init__(id, nome, email, telefone, cpf, senha, is_superuser=True)
         
-    def criar_usuario(self, id, nome, email, telefone, cpf, senha):
+    def criar_usuario():
         id_user = input("Digite o ID: ")
         nome = input("Digite o nome: ")
         email = input("Digite o email: ")
@@ -20,10 +22,15 @@ class Administrador(Usuario):
             novo_usuario = Funcionario(id_user, nome, email, telefone, cpf, senha)
             
         Sistema.Cadastrar(novo_usuario)
-        Pausar()
 
-    def excluir_usuario(self, usuario):
-        # Lógica para excluir um usuário do sistema
-        pass
-
-    
+    def excluir_entidade():
+        print("O que deseja excluir? (0 - Usuário, 1 - Cliente, 2 - Animal)")
+        op = input("Digite a opção: ")
+        
+        id = input("Digite o ID a ser excluído: ")
+        if op == "0":
+            Sistema.Excluir(Sistema.lista_usuarios, id)
+        elif op == "1":
+            Sistema.Excluir(Sistema.lista_clientes, id)
+        elif op == "2":
+            Sistema.Excluir(Sistema.lista_animais, id)
