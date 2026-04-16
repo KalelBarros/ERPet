@@ -87,6 +87,13 @@ def Cadastrar():
            Pausar()
         else:
              return "você não tem autorização para adicionar um serviço" 
+    elif opCadastrar == "3":
+        us = input("\nvocê é um funcionario? S/N ")
+        if us == 's' or us == 'S':
+           Funcionario.CadastrarServico()
+           Pausar()
+        else:
+             return "você não tem autorização para adicionar um serviço"
 def Listar():
     print("=======================\n\tListar\n=======================\n")
     print("0 - Listar Usuários")
