@@ -1,16 +1,18 @@
 from Classes.Subclasses.Pessoas.Cliente import Cliente
 from Classes.Classes_abstratas.Usuario import Usuario
 from Classes.Classes_abstratas.Animal import Animal
+from Classes.Subclasses.Servicos.Servico import Servico
 
 class Sistema:
 
     lista_animais = []
     lista_usuarios = []
     lista_clientes = []
+    lista_servicos = []
 
     @staticmethod
     def Cadastrar(objeto):
-
+        from Classes.Subclasses.Servicos.Servico import Servico
         if isinstance(objeto, Cliente):
             Sistema.lista_clientes.append(objeto)
             print(f"Cliente {objeto.get_nome()} cadastrado com sucesso!")
@@ -20,6 +22,9 @@ class Sistema:
         elif isinstance(objeto, Animal):
             Sistema.lista_animais.append(objeto)
             print(f"Animal {objeto.get_nome()} cadastrado com sucesso!")
+        elif isinstance(objeto, Servico):
+            Sistema.lista_servicos.append(objeto)
+            print(f"Serviço '{objeto.get_tipo()}' registrado com sucesso!")
 
         else:
             print("Erro: Tipo de objeto desconhecido para o sistema.")
