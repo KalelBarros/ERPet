@@ -31,18 +31,21 @@ class Sistema:
 
     @staticmethod
     def Editar(lista_alvo, id_alvo, campo, novo_valor):
-        # Busca o objeto pelo ID na lista fornecida (animais, clientes ou usuarios)
+        # Busca o objeto na lista pelo ID
         objeto = next((obj for obj in lista_alvo if obj.get_id() == id_alvo), None)
 
         if objeto:
-            # Verifica se o objeto tem o atributo que você quer mudar
-            if hasattr(objeto, campo):
-                setattr(objeto, campo, novo_valor)
-                print(f"Sucesso: {campo} do ID {id_alvo} atualizado para {novo_valor}.")
+            # Transforma o nome do campo no método setter (ex: 'nome' vira 'set_nome')
+            nome_metodo = f"set_{campo}"
+            
+            if hasattr(objeto, nome_metodo):
+                metodo = getattr(objeto, nome_metodo)
+                metodo(novo_valor) # Chama o setter da classe
+                print(f"Sucesso: {campo} atualizado!")
             else:
-                print(f"Erro: O atributo '{campo}' não existe neste registro.")
+                print(f"Erro: Atributo '{campo}' não pode ser editado.")
         else:
-            print(f"Erro: Registro com ID {id_alvo} não encontrado nesta lista.")
+            print("Erro: ID não encontrado.")
 
     @staticmethod
     def Excluir(lista_alvo, id_alvo):

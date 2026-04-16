@@ -179,29 +179,26 @@ def Editar():
     
     if opEditar == "0":
         print("--- Editar Usuário ---")
-        id_usuario = input("Digite o ID do usuário a editar: ")
-        campo = input("Digite o campo a ser editado (nome, email, telefone, cpf): ")
-        novo_valor = input(f"Digite o novo valor para {campo}: ")
+        id_usuario = input("Digite o ID do usuário: ")
+        # Campos válidos baseados nos setters da classe Pessoa/Usuario
+        campo = input("Campo (nome, email, telefone, cpf, senha): ")
+        novo_valor = input(f"Novo valor para {campo}: ")
         Sistema.Editar(Sistema.lista_usuarios, id_usuario, campo, novo_valor)
         
     elif opEditar == "1":
         print("--- Editar Cliente ---")
-        id_cliente = input("Digite o ID do cliente a editar: ")
-        campo = input("Digite o campo a ser editado (nome, email, telefone, cpf): ")
-        novo_valor = input(f"Digite o novo valor para {campo}: ")
+        id_cliente = input("Digite o ID do cliente: ")
+        campo = input("Campo (nome, email, telefone, cpf): ")
+        novo_valor = input(f"Novo valor para {campo}: ")
         Sistema.Editar(Sistema.lista_clientes, id_cliente, campo, novo_valor)
         
     elif opEditar == "2":
         print("--- Editar Animal ---")
-        id_animal = input("Digite o ID do animal a editar: ")
-        campo = input("Digite o campo a ser editado (nome, idade, sexo, raca, peso, cor): ")
-        novo_valor = input(f"Digite o novo valor para {campo}: ")
+        id_animal = input("Digite o ID do animal: ")
+        # Campos válidos baseados nos setters da classe Animal
+        campo = input("Campo (nome, idade, peso, historico): ")
+        novo_valor = input(f"Novo valor para {campo}: ")
         Sistema.Editar(Sistema.lista_animais, id_animal, campo, novo_valor)
-        
-    else:
-        print("Opção inválida. Por favor, tente novamente.")
-
-    Pausar()
     
 def CriarMenuPrincipal():
     print("=======================\n\tERPet\n=======================\n")
