@@ -178,27 +178,31 @@ def Editar():
     LimparTela()
     
     if opEditar == "0":
-        print("--- Editar Usuário ---")
-        id_usuario = input("Digite o ID do usuário: ")
-        # Campos válidos baseados nos setters da classe Pessoa/Usuario
-        campo = input("Campo (nome, email, telefone, cpf, senha): ")
+        id_usuario = input("ID do usuário: ")
+        campo = input("Campo (nome, email, telefone, cpf): ")
         novo_valor = input(f"Novo valor para {campo}: ")
         Sistema.Editar(Sistema.lista_usuarios, id_usuario, campo, novo_valor)
         
     elif opEditar == "1":
-        print("--- Editar Cliente ---")
-        id_cliente = input("Digite o ID do cliente: ")
+        id_cliente = input("ID do cliente: ")
         campo = input("Campo (nome, email, telefone, cpf): ")
         novo_valor = input(f"Novo valor para {campo}: ")
         Sistema.Editar(Sistema.lista_clientes, id_cliente, campo, novo_valor)
         
     elif opEditar == "2":
-        print("--- Editar Animal ---")
-        id_animal = input("Digite o ID do animal: ")
-        # Campos válidos baseados nos setters da classe Animal
+        id_animal = input("ID do animal: ")
         campo = input("Campo (nome, idade, peso, historico): ")
         novo_valor = input(f"Novo valor para {campo}: ")
+        
+        # Converte para os tipos corretos antes de enviar
+        if campo == "idade":
+            novo_valor = int(novo_valor)
+        elif campo == "peso":
+            novo_valor = float(novo_valor)
+            
         Sistema.Editar(Sistema.lista_animais, id_animal, campo, novo_valor)
+
+    Pausar()
     
 def CriarMenuPrincipal():
     print("=======================\n\tERPet\n=======================\n")
