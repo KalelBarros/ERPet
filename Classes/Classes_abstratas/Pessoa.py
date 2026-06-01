@@ -1,5 +1,6 @@
 # Classes/Classes_abstratas/Pessoa.py
 from abc import ABC
+import re
 
 class Pessoa(ABC):
     def __init__(self, id, nome, email, telefone, cpf):

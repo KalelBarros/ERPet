@@ -2,11 +2,15 @@
 from Classes.Subclasses.Pessoas.Cliente import Cliente
 from Classes.Classes_abstratas.Usuario import Usuario
 from Classes.Classes_abstratas.Animal import Animal
+
 from Classes.Subclasses.Animais.Canino import Canino
 from Classes.Subclasses.Animais.Felino import Felino
 from Classes.Subclasses.Animais.Ave import Ave
 from Classes.Subclasses.Animais.Roedor import Roedor
 import Banco.banco as banco
+
+from Classes.Subclasses.Servicos.Servico import Servico
+import Main
 
 class Sistema:
 
@@ -88,12 +92,18 @@ class Sistema:
     @staticmethod
     def Cadastrar(objeto, usuario_logado=None):
         """Salva o objeto na memória e no banco, e registra o log."""
+
+
+    @staticmethod
+    def Cadastrar(objeto):
+        from Classes.Subclasses.Servicos.Servico import Servico
+
         if isinstance(objeto, Cliente):
             Sistema.lista_clientes.append(objeto)
             banco.inserir_cliente(objeto)
-            if usuario_logado:
+            if Main.usuario_logado:
                 banco.inserir_log(
-                    usuario_logado.get_nome(),
+                    Main.usuario_logado.get_nome(),
                     f"Cadastro de cliente: {objeto.get_nome()}"
                 )
             print(f"✔ Cliente '{objeto.get_nome()}' cadastrado com sucesso!")
@@ -101,23 +111,28 @@ class Sistema:
         elif isinstance(objeto, Usuario):
             Sistema.lista_usuarios.append(objeto)
             banco.inserir_usuario(objeto)
-            if usuario_logado:
+            if Main.usuario_logado:
                 banco.inserir_log(
-                    usuario_logado.get_nome(),
+                    Main.usuario_logado.get_nome(),
                     f"Cadastro de usuário: {objeto.get_nome()} ({type(objeto).__name__})"
                 )
             print(f"✔ Usuário '{objeto.get_nome()}' ({type(objeto).__name__}) cadastrado!")
 
         elif isinstance(objeto, Animal):
             Sistema.lista_animais.append(objeto)
+
             banco.inserir_animal(objeto)
-            if usuario_logado:
+            if Main.usuario_logado:
                 banco.inserir_log(
-                    usuario_logado.get_nome(),
+                    Main.usuario_logado.get_nome(),
                     f"Cadastro de animal: {objeto.get_nome()} ({type(objeto).__name__})"
                 )
             print(f"✔ Animal '{objeto.get_nome()}' cadastrado com sucesso!")
 
+            print(f"Animal {objeto.get_nome()} cadastrado com sucesso!")
+        elif isinstance(objeto, Servico):
+            Sistema.lista_servicos.append(objeto)
+            print(f"Serviço '{objeto.get_tipo()}' registrado com sucesso!")
         else:
             print("Erro: Tipo de objeto desconhecido.")
 
@@ -173,6 +188,24 @@ class Sistema:
     # ═══════════════════════════════════════════════
     # EXCLUIR
     # ═══════════════════════════════════════════════
+    def Editar(lista_alvo, id_alvo, campo, novo_valor):
+        # Procura o objeto pelo ID
+        objeto = next((obj for obj in lista_alvo if obj.get_id() == id_alvo), None)
+
+        if objeto:
+            # Constrói o nome do método setter, ex: campo 'nome' vira 'set_nome'
+            nome_metodo = f"set_{campo}"
+            
+            # Verifica se o método setter existe na classe do objeto
+            if hasattr(objeto, nome_metodo):
+                # Obtém a função do método e executa-a com o novo valor
+                metodo = getattr(objeto, nome_metodo)
+                metodo(novo_valor) 
+                print(f"Sucesso: {campo} do ID {id_alvo} atualizado para {novo_valor}.")
+            else:
+                print(f"Erro: O campo '{campo}' não existe ou não pode ser editado.")
+        else:
+            print(f"Erro: Registro com ID {id_alvo} não encontrado.")
 
     @staticmethod
     def Excluir(lista_alvo, id_alvo, usuario_logado=None):
