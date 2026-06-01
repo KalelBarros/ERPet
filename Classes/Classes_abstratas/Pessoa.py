@@ -1,3 +1,4 @@
+# Classes/Classes_abstratas/Pessoa.py
 from abc import ABC
 
 class Pessoa(ABC):
@@ -8,29 +9,14 @@ class Pessoa(ABC):
         self.__telefone = telefone
         self.__cpf = cpf
 
+    # Getters
+    def get_id(self):           return self.__id
+    def get_nome(self):         return self.__nome
+    def get_email(self):        return self.__email
+    def get_telefone(self):     return self.__telefone
+    def get_cpf(self):          return self.__cpf
 
-    def get_id(self): return self.__id
-
-    def get_nome(self):
-        return self.__nome
-
-    def nome(self, value):
-        self.__nome = value
-
-    def get_email(self):
-        return self.__email
-
-    def email(self, value):
-        self.__email = value
-
-    def get_telefone(self):
-        return self.__telefone
-
-    def telefone(self, value):
-        self.__telefone = value
-
-    def get_cpf(self):
-        return self.__cpf
-        
-    def cpf(self, value):
-        self.__cpf = value
+    # Setters — padrão set_campo()
+    def set_nome(self, v):      self.__nome = v
+    def set_email(self, v):     self.__email = v
+    def set_telefone(self, v):  self.__telefone = v

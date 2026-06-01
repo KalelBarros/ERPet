@@ -1,4 +1,5 @@
-from Classes.Classes_abstratas.Usuario import Usuario 
+# Classes/Subclasses/Pessoas/Funcionario.py
+from Classes.Classes_abstratas.Usuario import Usuario
 from Classes.Subclasses.Pessoas.Cliente import Cliente
 from Classes.Subclasses.Animais.Canino import Canino
 from Classes.Subclasses.Animais.Felino import Felino
@@ -9,66 +10,61 @@ from Sistema.Sistema import Sistema
 class Funcionario(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
         super().__init__(id, nome, email, telefone, cpf, senha, is_superuser=False)
-    
 
-    def CadastrarCliente():
+    @staticmethod
+    def CadastrarCliente(usuario_logado=None):
+        id = input("ID do cliente: ")
+        nome = input("Nome: ")
+        email = input("Email: ")
+        telefone = input("Telefone: ")
+        cpf = input("CPF: ")
+        endereco = input("Endereço: ")
 
-        id = input("Digite o ID do cliente: ")
-        nome = input("Digite o nome do cliente: ")
-        email = input("Digite o email do cliente: ")
-        telefone = input("Digite o telefone do cliente: ")
-        cpf = input("Digite o CPF do cliente: ")
+        cliente = Cliente(id, nome, email, telefone, cpf, endereco)
+        Sistema.Cadastrar(cliente, usuario_logado)
 
-        cliente = Cliente(id, nome, email, telefone, cpf)
-        Sistema.Cadastrar(cliente)
-
-    def CadastrarAnimal():
-
-        tipo = input("Digite o tipo do animal (Canino, Felino, Ave ou Roedor): ")
+    @staticmethod
+    def CadastrarAnimal(usuario_logado=None):
+        tipo = input("Tipo do animal (Canino / Felino / Ave / Roedor): ").strip()
 
         if tipo not in ["Canino", "Felino", "Ave", "Roedor"]:
-            print("Tipo de animal inválido. Por favor, tente novamente.")
+            print("Tipo inválido.")
             return
-        
-        id = input("Digite o ID do animal: ")
-        nome = input("Digite o nome do animal: ")
-        idade = input("Digite a idade do animal: ")
-        sexo = input("Digite o sexo do animal (M/F): ")
-        raca = input("Digite a raça do animal: ")
-        peso = input("Digite o peso do animal: ")
-        cor = input("Digite a cor do animal: ")
-        historico = input("Digite o histórico do animal: ")
-        id_dono = input("Digite o ID do dono do animal: ")
+
+        id = input("ID: ")
+        nome = input("Nome: ")
+        idade = int(input("Idade: "))
+        sexo = input("Sexo (M/F): ")
+        raca = input("Raça: ")
+        peso = float(input("Peso (kg): "))
+        cor = input("Cor: ")
+        historico = input("Histórico: ")
+        id_dono = input("ID do dono: ")
 
         if tipo == "Canino":
-            porte = input("Digite o porte do canino (Pequeno, Médio, Grande): ")
-            is_vacinado = input("O canino é vacinado? (Sim/Não): ")
-            is_castrado = input("O canino é castrado? (Sim/Não): ")
-            tipo_pelo = input("Digite o tipo de pelo do canino (Curto, Médio, Longo): ")
-
-            animal = Canino(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, porte, is_vacinado, is_castrado, tipo_pelo)
-            Sistema.Cadastrar(animal)
+            porte = input("Porte (Pequeno/Médio/Grande): ")
+            is_vacinado = input("Vacinado? (Sim/Não): ")
+            is_castrado = input("Castrado? (Sim/Não): ")
+            tipo_pelo = input("Tipo de pelo (Curto/Médio/Longo): ")
+            animal = Canino(id, nome, idade, sexo, raca, peso, cor, historico,
+                           id_dono, porte, is_vacinado, is_castrado, tipo_pelo)
 
         elif tipo == "Felino":
-            porte = input("Digite o porte do felino (Pequeno, Médio, Grande): ")
-            is_vacinado = input("O felino é vacinado? (Sim/Não): ")
-            is_castrado = input("O felino é castrado? (Sim/Não): ")
-            tipo_pelo = input("Digite o tipo de pelo do felino (Curto, Médio, Longo): ")
-
-            animal = Felino(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, porte, is_vacinado, is_castrado, tipo_pelo)
-            Sistema.Cadastrar(animal)
+            is_castrado = input("Castrado? (Sim/Não): ")
+            tipo_pelo = input("Tipo de pelo (Curto/Longo): ")
+            animal = Felino(id, nome, idade, sexo, raca, peso, cor, historico,
+                           id_dono, is_castrado, tipo_pelo)
 
         elif tipo == "Ave":
-            anilha = input("Digite o número da anilha da ave: ")
-            is_asas_cortadas = input("A ave tem asas cortadas? (Sim/Não): ")
-
-            animal = Ave(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, anilha, is_asas_cortadas)
-            Sistema.Cadastrar(animal)
+            anilha = input("Número da anilha: ")
+            is_asas_cortadas = input("Asas cortadas? (Sim/Não): ")
+            animal = Ave(id, nome, idade, sexo, raca, peso, cor, historico,
+                        id_dono, anilha, is_asas_cortadas)
 
         elif tipo == "Roedor":
-            tipo_roedor = input("Digite o tipo do roedor (Hamster, Porquinho-da-índia, Rato, Camundongo): ")
+            especie = input("Espécie (Hamster/Coelho/Porquinho): ")
+            substrato = input("Substrato (Maravalha/Papel/Serragem): ")
+            animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico,
+                           id_dono, especie, substrato)
 
-            animal = Roedor(id, nome, idade, sexo, raca, peso, cor, historico, id_dono, tipo_roedor)
-            Sistema.Cadastrar(animal)
-
-    
+        Sistema.Cadastrar(animal, usuario_logado)

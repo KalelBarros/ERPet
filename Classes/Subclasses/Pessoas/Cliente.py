@@ -1,21 +1,21 @@
-
-from Classes.Classes_abstratas.Pessoa import Pessoa 
+# Classes/Subclasses/Pessoas/Cliente.py
+from Classes.Classes_abstratas.Pessoa import Pessoa
 
 class Cliente(Pessoa):
-    def __init__(self, id, nome, email, telefone, cpf):
+    def __init__(self, id, nome, email, telefone, cpf, endereco=""):
         super().__init__(id, nome, email, telefone, cpf)
+        self.__endereco = endereco
+        self.__lista_animais = []   # IDs dos animais vinculados
 
-    def get_id(self):
-        return super().get_id()
-    
-    def get_nome(self):
-        return super().get_nome()
-    
-    def get_email(self):
-        return super().get_email()
-    
-    def get_telefone(self):
-        return super().get_telefone()
-    
-    def get_cpf(self):
-        return super().get_cpf()
+    # Getter e setter do que é exclusivo de Cliente
+    def get_endereco(self):             return self.__endereco
+    def set_endereco(self, v):          self.__endereco = v
+
+    def get_lista_animais(self):        return self.__lista_animais
+
+    def adicionar_animal(self, id_animal):
+        self.__lista_animais.append(id_animal)
+
+    def exibir_dados(self):
+        print(f"ID: {self.get_id()} | Nome: {self.get_nome()} | CPF: {self.get_cpf()}")
+        print(f"Email: {self.get_email()} | Telefone: {self.get_telefone()} | Endereço: {self.__endereco}")

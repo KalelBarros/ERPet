@@ -1,0 +1,89 @@
+[2026-05-31 21:31:58] admin - Login no sistema
+[2026-05-31 21:38:44] admin - Login no sistema
+[2026-05-31 21:39:07] admin - Login no sistema
+[2026-05-31 21:39:34] admin - Login no sistema
+[2026-05-31 23:07:53] admin - Login no sistema
+[2026-05-31 23:10:17] admin - Login no sistema
+[2026-05-31 23:11:43] admin - Login no sistema
+[2026-05-31 23:11:56] admin - Logout
+[2026-05-31 23:12:02] admin - Login no sistema
+[2026-05-31 23:12:25] admin - Remoção de Administrador ID '1': admin
+[2026-05-31 23:12:33] admin - Logout
+[2026-05-31 23:12:39] admin - Login no sistema
+[2026-05-31 23:15:13] admin - Login no sistema
+[2026-05-31 23:16:46] admin - Cadastro de usuário: Kalel (Funcionario)
+[2026-05-31 23:16:53] admin - Logout
+[2026-05-31 23:17:11] admin - Login no sistema
+[2026-05-31 23:17:17] admin - Logout
+[2026-05-31 23:19:18] admin - Login no sistema
+[2026-05-31 23:19:46] admin - Cadastro de usuário: kalel (Funcionario)
+[2026-05-31 23:19:54] admin - Logout
+[2026-05-31 23:20:09] admin - Login no sistema
+[2026-05-31 23:21:28] admin - Login no sistema
+[2026-05-31 23:22:34] admin - Cadastro de cliente: asd
+[2026-05-31 23:50:04] admin - Login no sistema
+[2026-05-31 23:50:34] admin - Cadastro de usuário: kalel (Administrador)
+[2026-05-31 23:50:41] admin - Remoção de Administrador ID '1': admin
+[2026-05-31 23:50:45] admin - Remoção de Administrador ID '1': kalel
+[2026-05-31 23:50:46] admin - Logout
+[2026-05-31 23:50:51] admin - Login no sistema
+[2026-05-31 23:51:12] admin - Cadastro de usuário: Kalel (Funcionario)
+[2026-05-31 23:51:14] admin - Logout
+[2026-05-31 23:51:33] admin - Login no sistema
+[2026-05-31 23:52:06] admin - Logout
+[2026-06-01 00:13:32] admin - Login no sistema
+[2026-06-01 00:14:20] admin - Cadastro de usuário: Kalel (Funcionario)
+[2026-06-01 00:14:26] admin - Logout
+[2026-06-01 00:14:30] Kalel - Login no sistema
+[2026-06-01 00:18:31] Kalel - Login no sistema
+[2026-06-01 01:17:52] admin - Login no sistema
+[2026-06-01 01:28:40] admin - Login no sistema
+[2026-06-01 01:31:06] admin - Login no sistema
+[2026-06-01 01:32:12] admin - Login no sistema
+[2026-06-01 01:32:56] admin - Login no sistema
+[2026-06-01 01:34:32] admin - Login no sistema
+[2026-06-01 01:35:55] admin - Login no sistema
+[2026-06-01 01:38:56] admin - Login no sistema
+[2026-06-01 01:39:51] admin - Login no sistema
+[2026-06-01 01:40:35] admin - Login no sistema
+[2026-06-01 01:41:49] admin - Login no sistema
+[2026-06-01 01:44:03] admin - Login no sistema
+[2026-06-01 01:45:30] admin - Login no sistema
+[2026-06-01 01:46:49] admin - Login no sistema
+[2026-06-01 01:47:33] admin - Login no sistema
+[2026-06-01 01:51:40] admin - Login no sistema
+[2026-06-01 01:52:38] admin - Login no sistema
+[2026-06-01 01:54:11] admin - Login no sistema
+[2026-06-01 01:54:34] admin - Login no sistema
+[2026-06-01 01:54:53] admin - Login no sistema
+[2026-06-01 02:00:58] admin - Login no sistema
+[2026-06-01 02:01:56] admin - Login no sistema
+[2026-06-01 02:02:30] admin - Login no sistema
+[2026-06-01 02:04:09] admin - Login no sistema
+[2026-06-01 02:05:34] admin - Login no sistema
+[2026-06-01 02:09:17] admin - Login no sistema
+[2026-06-01 02:11:03] admin - Login no sistema
+[2026-06-01 02:12:40] admin - Login no sistema
+[2026-06-01 02:14:12] admin - Login no sistema
+[2026-06-01 02:14:51] admin - Login no sistema
+[2026-06-01 02:15:49] admin - Login no sistema
+[2026-06-01 02:16:23] admin - Login no sistema
+[2026-06-01 02:17:57] admin - Login no sistema
+[2026-06-01 02:19:13] admin - Login no sistema
+[2026-06-01 02:24:07] admin - Login no sistema
+[2026-06-01 02:26:33] admin - Login no sistema
+[2026-06-01 02:28:33] admin - Login no sistema
+[2026-06-01 02:29:56] admin - Login no sistema
+[2026-06-01 02:30:37] admin - Login no sistema
+[2026-06-01 02:32:27] admin - Login no sistema
+[2026-06-01 02:33:02] admin - Login no sistema
+[2026-06-01 02:35:06] admin - Login no sistema
+[2026-06-01 02:36:03] admin - Login no sistema
+[2026-06-01 02:37:39] admin - Login no sistema
+[2026-06-01 02:39:14] admin - Login no sistema
+[2026-06-01 02:40:46] admin - Login no sistema
+[2026-06-01 02:51:01] admin - Login no sistema
+[2026-06-01 03:02:24] admin - Login no sistema
+[2026-06-01 03:04:50] admin - Login no sistema
+[2026-06-01 03:08:03] admin - Login no sistema
+[2026-06-01 03:09:19] admin - Login no sistema

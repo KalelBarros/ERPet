@@ -1,221 +1,320 @@
+# Main.py
 import sys
 import os
 
-
-# Adiciona a pasta raiz (ERPet) ao caminho de busca do Python
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-
 
 from Classes.Subclasses.Pessoas.Administrador import Administrador
 from Classes.Subclasses.Pessoas.Funcionario import Funcionario
 from Sistema.Sistema import Sistema
+import Banco.banco as banco
+
+# Usuário logado na sessão atual
+usuario_logado = None
+
 
 def Main():
-    
-    Op = -1
+    global usuario_logado
 
-    while Op != "4":
+    # Inicializa o banco e carrega os dados na memória
+    Sistema.inicializar()
+
+    # Cria admin padrão se não houver nenhum usuário no banco
+    if not Sistema.lista_usuarios:
+        admin = Administrador("1", "admin", "admin@erpet.com", "0000", "000.000.000-00", "admin123")
+        Sistema.Cadastrar(admin)
+        Sistema.lista_usuarios.append(admin)
+        print("✔ Admin padrão criado! Login: 'admin' | Senha: 'admin123'")
+        Pausar()
+
+    if not fazer_login():
+        return
+
+    op = ""
+    while op != "5":
         LimparTela()
         CriarMenuPrincipal()
-        Op = input("\nDigite a opção desejada: ")
-         
+        op = input("\nDigite a opção desejada: ")
         LimparTela()
 
-
-        if Op == "0":
+        if op == "0":
             Cadastrar()
-
-        elif Op == "1":
+        elif op == "1":
             Listar()
-            pass
-
-        elif Op == "2":
+        elif op == "2":
             Editar()
-            pass
-
-        elif Op == "3":
+        elif op == "3":
             Remover()
-
-        elif Op == "4":
+        elif op == "4":
+            VerLogs()
+        elif op == "5":
+            banco.inserir_log(usuario_logado.get_nome(), "Logout")
             print("Encerrando o programa. Até logo!")
-            break
-
         else:
-            print("Opção inválida. Por favor, tente novamente.")
+            print("Opção inválida.")
             Pausar()
-            LimparTela()
 
 
+def fazer_login():
+    global usuario_logado
+    LimparTela()
+    print("=======================")
+    print("\t  ERPet - Login")
+    print("=======================\n")
+
+    nome  = input("Usuário: ")
+    senha = input("Senha:   ")
+
+    row = banco.buscar_usuario_login(nome, senha)
+
+    if row:
+        id, nome_db, email, telefone, cpf, senha_db, is_superuser = row
+        if is_superuser:
+            from Classes.Subclasses.Pessoas.Administrador import Administrador
+            usuario_logado = Administrador(id, nome_db, email, telefone, cpf, senha_db)
+        else:
+            from Classes.Subclasses.Pessoas.Funcionario import Funcionario
+            usuario_logado = Funcionario(id, nome_db, email, telefone, cpf, senha_db)
+
+        banco.inserir_log(usuario_logado.get_nome(), "Login no sistema")
+        print(f"\n✔ Bem-vindo, {usuario_logado.get_nome()}! ({type(usuario_logado).__name__})")
+        Pausar()
+        return True
+    else:
+        print("\n✘ Usuário ou senha incorretos.")
+        Pausar()
+        return False
+
+
+# ═══════════════════════════════════════════════
+# CADASTRAR
+# ═══════════════════════════════════════════════
 
 def Cadastrar():
-
-    opCadastrar = -1
-
-    print("=======================\n\tCadastrar\n=======================\n")
+    print("=======================")
+    print("\tCadastrar")
+    print("=======================\n")
     print("0 - Cadastrar Usuário")
     print("1 - Cadastrar Cliente")
     print("2 - Cadastrar Animal")
-    print("3 - Cadastrar Servico")
-    opCadastrar = input("\nDigite o que deseja cadastrar: ")
+    op = input("\nDigite a opção: ")
+    LimparTela()
 
-    if opCadastrar == "0":
-       adm = input("\nvocê é um administrador? S/N ")
-       if adm == 's' or adm == 'S':
-        Administrador.criar_usuario()
-        Pausar()
-       else:
-         return "você não tem autorização para adicionar um usuario" 
-    elif opCadastrar == "1":
-        us = input("\nvocê é um funcionario? S/N ")
-        if us == 's' or us == 'S':
-            Funcionario.CadastrarCliente()
-            Pausar()
+    if op == "0":
+        if not usuario_logado.get_is_superuser():
+            print("✘ Apenas administradores podem cadastrar usuários.")
         else:
-            return "você não tem autorização para adicionar um cliente" 
-    elif opCadastrar == "2":
-        us = input("\nvocê é um funcionario? S/N ")
-        if us == 's' or us == 'S':
-           Funcionario.CadastrarAnimal()
-           Pausar()
-        else:
-            return "você não tem autorização para adicionar um animal" 
-    elif opCadastrar == "3":
-        us = input("\nvocê é um funcionario? S/N ")
-        if us == 's' or us == 'S':
-           Funcionario.Cadastrar()
-           Pausar()
-        else:
-             return "você não tem autorização para adicionar um serviço" 
+            Administrador.criar_usuario(usuario_logado)
+
+    elif op == "1":
+        Funcionario.CadastrarCliente(usuario_logado)
+
+    elif op == "2":
+        Funcionario.CadastrarAnimal(usuario_logado)
+
+    else:
+        print("Opção inválida.")
+
+    Pausar()
+
+
+# ═══════════════════════════════════════════════
+# LISTAR
+# ═══════════════════════════════════════════════
+
 def Listar():
-    print("=======================\n\tListar\n=======================\n")
+    print("=======================")
+    print("\tListar")
+    print("=======================\n")
     print("0 - Listar Usuários")
     print("1 - Listar Clientes")
     print("2 - Listar Animais")
     print("3 - Listar Serviços")
-    
-    opListar = input("\nDigite o que deseja listar: ")
-    
+    print("4 - Listar Estoque")
+    op = input("\nDigite a opção: ")
     LimparTela()
-    
-    if opListar == "0":
-        print("Lista de Usuários")
-        if len(Sistema.lista_usuarios) == 0:
-            print("Nenhum usuário cadastrado no sistema.")
-        else:
-            for usuario in Sistema.lista_usuarios:
-                print(f"ID: {usuario.get_id()} | Nome: {usuario.get_nome()} | E-mail: {usuario.get_email()} | Tipo: {type(usuario).__name__}")
-                
-    elif opListar == "1":
-        print("Lista de Clientes")
-        if len(Sistema.lista_clientes) == 0:
-            print("Nenhum cliente cadastrado no sistema.")
-        else:
-            for cliente in Sistema.lista_clientes:
-                print(f"ID: {cliente.get_id()} | Nome: {cliente.get_nome()} | E-mail: {cliente.get_email()} | CPF: {cliente.get_cpf()}")
-                
-    elif opListar == "2":
-        print("Lista de Animais")
-        if len(Sistema.lista_animais) == 0:
-            print("Nenhum animal cadastrado no sistema.")
-        else:
-            for animal in Sistema.lista_animais:
-                animal.exibir_dados()
-                print("-" * 50)
-                
-    elif opListar == "3":
-        print("Lista de Serviços ")
-        if len(Sistema.lista_servicos) == 0:
-            print("Nenhum serviço registrado no sistema.")
-        else:
-            for servico in Sistema.lista_servicos:
-                servico.exibir_dados()
-                print("-" * 50)
-                
+
+    if op == "0":
+        print("─── Usuários ───")
+        if not Sistema.lista_usuarios:
+            print("Nenhum usuário cadastrado.")
+        for u in Sistema.lista_usuarios:
+            print(f"ID: {u.get_id()} | Nome: {u.get_nome()} | "
+                  f"Email: {u.get_email()} | Tipo: {type(u).__name__}")
+
+    elif op == "1":
+        print("─── Clientes ───")
+        if not Sistema.lista_clientes:
+            print("Nenhum cliente cadastrado.")
+        for c in Sistema.lista_clientes:
+            c.exibir_dados()
+            print("-" * 40)
+
+    elif op == "2":
+        print("─── Animais ───")
+        if not Sistema.lista_animais:
+            print("Nenhum animal cadastrado.")
+        for a in Sistema.lista_animais:
+            a.exibir_dados()
+            print(f"Idade humana equiv.: {a.calcular_idade_humana()} anos")
+            print("-" * 40)
+
+    elif op == "3":
+        print("─── Serviços ───")
+        if not Sistema.lista_servicos:
+            print("Nenhum serviço registrado.")
+        for s in Sistema.lista_servicos:
+            s.exibir_dados()
+            print("-" * 40)
+
+    elif op == "4":
+        print("─── Estoque ───")
+        if not Sistema.lista_estoque:
+            print("Nenhum produto no estoque.")
+        for e in Sistema.lista_estoque:
+            e.exibir_dados()
+            print("-" * 40)
+
     else:
-        print("Opção inválida. Por favor, tente novamente.")
-        
+        print("Opção inválida.")
+
     Pausar()
 
+
+# ═══════════════════════════════════════════════
+# EDITAR
+# ═══════════════════════════════════════════════
+
+def Editar():
+    print("=======================")
+    print("\tEditar")
+    print("=======================\n")
+    print("0 - Editar Cliente")
+    print("1 - Editar Animal")
+    op = input("\nDigite a opção: ")
+    LimparTela()
+
+    mapa_setters = {
+        "nome":      "set_nome",
+        "email":     "set_email",
+        "telefone":  "set_telefone",
+        "endereco":  "set_endereco",
+        "peso":      "set_peso",
+        "historico": "set_historico",
+        "raca":      "set_raca",
+        "cor":       "set_cor",
+        "idade":     "set_idade",
+    }
+
+    if op == "0":
+        id_alvo = input("ID do cliente: ")
+        print("Campos disponíveis: nome / email / telefone / endereco")
+        campo = input("Campo a editar: ")
+        novo_valor = input(f"Novo valor para '{campo}': ")
+        setter = mapa_setters.get(campo)
+        if setter:
+            Sistema.Editar(Sistema.lista_clientes, id_alvo,
+                           setter, novo_valor, usuario_logado)
+        else:
+            print("Campo inválido.")
+
+    elif op == "1":
+        id_alvo = input("ID do animal: ")
+        print("Campos disponíveis: nome / peso / historico / raca / cor / idade")
+        campo = input("Campo a editar: ")
+        novo_valor = input(f"Novo valor para '{campo}': ")
+        setter = mapa_setters.get(campo)
+        if setter:
+            Sistema.Editar(Sistema.lista_animais, id_alvo,
+                           setter, novo_valor, usuario_logado)
+        else:
+            print("Campo inválido.")
+
+    else:
+        print("Opção inválida.")
+
+    Pausar()
+
+
+# ═══════════════════════════════════════════════
+# REMOVER
+# ═══════════════════════════════════════════════
+
 def Remover():
-    print("=======================\n\tRemover\n=======================\n")
+    print("=======================")
+    print("\tRemover")
+    print("=======================\n")
+
+    if not usuario_logado.get_is_superuser():
+        print("✘ Apenas administradores podem remover registros.")
+        Pausar()
+        return
+
     print("0 - Remover Usuário")
     print("1 - Remover Cliente")
     print("2 - Remover Animal")
-    
-    opRemover = input("\nEscolha o que deseja remover: ")
+    op = input("\nDigite a opção: ")
+    id_alvo = input("ID a remover: ")
     LimparTela()
-    
-    if opRemover == "0":
-        adm = input("Você é um administrador? S/N ")
-        if adm == 's'  or adm == 'S':
-            Administrador.excluir_entidade()
-        else:
-            print("Erro: Apenas administradores têm permissão para excluir.")
-    
-    elif opRemover == "1":
-        print("--- Remover Cliente ---")
-        id_cliente = input("Digite o ID do cliente a remover: ")
-        Sistema.Excluir(Sistema.lista_clientes, id_cliente)
-        
-    elif opRemover == "2":
-        print("--- Remover Animal ---")
-        id_animal = input("Digite o ID do animal a remover: ")
-        Sistema.Excluir(Sistema.lista_animais, id_animal)
-        
+
+    if op == "0":
+        Sistema.Excluir(Sistema.lista_usuarios, id_alvo, usuario_logado)
+    elif op == "1":
+        Sistema.Excluir(Sistema.lista_clientes, id_alvo, usuario_logado)
+    elif op == "2":
+        Sistema.Excluir(Sistema.lista_animais, id_alvo, usuario_logado)
     else:
-        print("Opção inválida. Por favor, tente novamente.")
+        print("Opção inválida.")
 
     Pausar()
 
-def Editar():
-    print("=======================\n\tEditar\n=======================\n")
-    print("0 - Editar Usuário")
-    print("1 - Editar Cliente")
-    print("2 - Editar Animal")
-    
-    opEditar = input("\nEscolha o que deseja editar: ")
-    LimparTela()
-    
-    if opEditar == "0":
-        print("--- Editar Usuário ---")
-        id_usuario = input("Digite o ID do usuário a editar: ")
-        campo = input("Digite o campo a ser editado (nome, email, telefone, cpf): ")
-        novo_valor = input(f"Digite o novo valor para {campo}: ")
-        Sistema.Editar(Sistema.lista_usuarios, id_usuario, campo, novo_valor)
-        
-    elif opEditar == "1":
-        print("--- Editar Cliente ---")
-        id_cliente = input("Digite o ID do cliente a editar: ")
-        campo = input("Digite o campo a ser editado (nome, email, telefone, cpf): ")
-        novo_valor = input(f"Digite o novo valor para {campo}: ")
-        Sistema.Editar(Sistema.lista_clientes, id_cliente, campo, novo_valor)
-        
-    elif opEditar == "2":
-        print("--- Editar Animal ---")
-        id_animal = input("Digite o ID do animal a editar: ")
-        campo = input("Digite o campo a ser editado (nome, idade, sexo, raca, peso, cor): ")
-        novo_valor = input(f"Digite o novo valor para {campo}: ")
-        Sistema.Editar(Sistema.lista_animais, id_animal, campo, novo_valor)
-        
-    else:
-        print("Opção inválida. Por favor, tente novamente.")
+
+# ═══════════════════════════════════════════════
+# LOGS
+# ═══════════════════════════════════════════════
+
+def VerLogs():
+    if not usuario_logado.get_is_superuser():
+        print("✘ Apenas administradores podem visualizar os logs.")
+        Pausar()
+        return
+
+    print("=======================")
+    print("\tLogs do Sistema")
+    print("=======================\n")
+
+    logs = banco.listar_logs()
+    if not logs:
+        print("Nenhuma atividade registrada.")
+    for data_hora, usuario, acao in logs:
+        print(f"[{data_hora}] {usuario} - {acao}")
 
     Pausar()
-    
+
+
+# ═══════════════════════════════════════════════
+# HELPERS
+# ═══════════════════════════════════════════════
+
 def CriarMenuPrincipal():
-    print("=======================\n\tERPet\n=======================\n")
+    tipo = type(usuario_logado).__name__
+    print(f"=======================")
+    print(f"\t ERPet [{tipo}]")
+    print(f"=======================\n")
     print("0 - Cadastrar")
     print("1 - Listar")
     print("2 - Editar")
     print("3 - Remover")
-    print("4 - Encerrar Programa")
+    print("4 - Ver Logs")
+    print("5 - Encerrar Programa")
+
 
 def LimparTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+
 def Pausar():
-    input("Pressione Enter para continuar...")
+    input("\nPressione Enter para continuar...")
 
 
 Main()
