@@ -1,6 +1,5 @@
 # Classes/Subclasses/Pessoas/Administrador.py
 from Classes.Classes_abstratas.Usuario import Usuario
-from Sistema.Sistema import Sistema
 
 class Administrador(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
@@ -10,6 +9,7 @@ class Administrador(Usuario):
     def criar_usuario(usuario_logado=None):
         # Import aqui dentro para evitar importação circular
         from Classes.Subclasses.Pessoas.Funcionario import Funcionario
+        from Sistema.Sistema import Sistema 
 
         id_user = input("ID: ")
         nome = input("Nome: ")

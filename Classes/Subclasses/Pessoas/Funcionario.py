@@ -5,7 +5,6 @@ from Classes.Subclasses.Animais.Canino import Canino
 from Classes.Subclasses.Animais.Felino import Felino
 from Classes.Subclasses.Animais.Ave import Ave
 from Classes.Subclasses.Animais.Roedor import Roedor
-from Sistema.Sistema import Sistema
 
 class Funcionario(Usuario):
     def __init__(self, id, nome, email, telefone, cpf, senha):
@@ -13,6 +12,8 @@ class Funcionario(Usuario):
 
     @staticmethod
     def CadastrarCliente(usuario_logado=None):
+        from Sistema.Sistema import Sistema 
+
         id = input("ID do cliente: ")
         nome = input("Nome: ")
         email = input("Email: ")
@@ -25,6 +26,7 @@ class Funcionario(Usuario):
 
     @staticmethod
     def CadastrarAnimal(usuario_logado=None):
+        from Sistema.Sistema import Sistema 
         tipo = input("Tipo do animal (Canino / Felino / Ave / Roedor): ").strip()
 
         if tipo not in ["Canino", "Felino", "Ave", "Roedor"]:

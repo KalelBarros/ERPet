@@ -6,7 +6,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from Classes.Subclasses.Pessoas.Administrador import Administrador
 from Classes.Subclasses.Pessoas.Funcionario import Funcionario
-from Sistema.Sistema import Sistema
 import Banco.banco as banco
 
 # Usuário logado na sessão atual
@@ -15,7 +14,7 @@ usuario_logado = None
 
 def Main():
     global usuario_logado
-
+    from Sistema.Sistema import Sistema 
     # Inicializa o banco e carrega os dados na memória
     Sistema.inicializar()
 
@@ -123,6 +122,7 @@ def Cadastrar():
 # ═══════════════════════════════════════════════
 
 def Listar():
+    from Sistema.Sistema import Sistema 
     print("=======================")
     print("\tListar")
     print("=======================\n")
@@ -186,6 +186,7 @@ def Listar():
 # ═══════════════════════════════════════════════
 
 def Editar():
+    from Sistema.Sistema import Sistema 
     print("=======================")
     print("\tEditar")
     print("=======================\n")
@@ -241,6 +242,7 @@ def Editar():
 # ═══════════════════════════════════════════════
 
 def Remover():
+    from Sistema.Sistema import Sistema 
     print("=======================")
     print("\tRemover")
     print("=======================\n")
@@ -274,6 +276,7 @@ def Remover():
 # ═══════════════════════════════════════════════
 
 def VerLogs():
+    from Sistema.Sistema import Sistema 
     if not usuario_logado.get_is_superuser():
         print("✘ Apenas administradores podem visualizar os logs.")
         Pausar()
@@ -317,4 +320,6 @@ def Pausar():
     input("\nPressione Enter para continuar...")
 
 
-Main()
+# No final de Main.py (linha 323)
+if __name__ == "__main__":
+    Main()

@@ -87,3 +87,4 @@
 [2026-06-01 03:04:50] admin - Login no sistema
 [2026-06-01 03:08:03] admin - Login no sistema
 [2026-06-01 03:09:19] admin - Login no sistema
+[2026-06-01 03:26:45] admin - Login no sistema
