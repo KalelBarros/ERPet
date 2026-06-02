@@ -183,6 +183,20 @@ def listar_usuarios():
     return rows
 
 
+def editar_usuario(id_usuario, campo, novo_valor):
+    """Atualiza um campo específico de um usuário."""
+    # ADICIONE "cpf" NA LISTA ABAIXO:
+    campos_permitidos = {"nome", "email", "telefone", "cpf", "senha"}
+    if campo not in campos_permitidos:
+        print(f"Erro: Campo '{campo}' não permitido para edição.")
+        return
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute(f"UPDATE usuarios SET {campo} = ? WHERE id = ?", (novo_valor, id_usuario))
+    conn.commit()
+    conn.close()
+
+
 def excluir_usuario(id_usuario):
     """Remove um usuário pelo ID."""
     conn = conectar()
@@ -231,7 +245,8 @@ def listar_clientes():
 
 def editar_cliente(id_cliente, campo, novo_valor):
     """Atualiza um campo específico de um cliente."""
-    campos_permitidos = {"nome", "email", "telefone", "endereco"}
+    # ADICIONE "cpf" NA LISTA ABAIXO:
+    campos_permitidos = {"nome", "email", "telefone", "endereco", "cpf"}
     if campo not in campos_permitidos:
         print(f"Erro: Campo '{campo}' não permitido para edição.")
         return

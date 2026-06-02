@@ -120,3 +120,18 @@
 [2026-06-02 01:58:50] admin - Login no sistema
 [2026-06-02 02:00:55] admin - Login no sistema
 [2026-06-02 02:01:40] admin - Login no sistema
+[2026-06-02 02:06:04] Kalel - Login no sistema
+[2026-06-02 02:07:35] admin - Login no sistema
+[2026-06-02 02:09:41] admin - Login no sistema
+[2026-06-02 02:13:13] admin - Login no sistema
+[2026-06-02 02:14:45] admin - Remoção de Felino ID 'ANI_b471859374927576': Gato
+[2026-06-02 02:15:38] admin - Login no sistema
+[2026-06-02 02:16:00] admin - Cadastro de animal: Gt (Felino)
+[2026-06-02 02:21:27] admin - Login no sistema
+[2026-06-02 02:25:50] admin - Login no sistema
+[2026-06-02 02:32:50] admin - Login no sistema
+[2026-06-02 02:34:26] admin - Login no sistema
+[2026-06-02 02:38:41] admin - Login no sistema
+[2026-06-02 02:42:14] admin - Login no sistema
+[2026-06-02 02:45:32] admin - Login no sistema
+[2026-06-02 02:46:49] admin - Login no sistema

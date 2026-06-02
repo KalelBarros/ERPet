@@ -134,76 +134,69 @@ class Sistema:
         else:
             print("Erro: Tipo de objeto desconhecido.")
 
+
     # ═══════════════════════════════════════════════
-    # EDITAR
+    # EDITAR — VERSÃO UNIFICADA E TOTALMENTE LIMPA
     # ═══════════════════════════════════════════════
 
     @staticmethod
-    def Editar(lista_alvo, id_alvo, setter_nome, novo_valor, usuario_logado=None):
-        """Atualiza o objeto na memória e no banco."""
+    def Editar(lista_alvo, id_alvo, campo, novo_valor, usuario_logado=None):
+        """Atualiza o objeto na memória e no banco de dados de forma consistente."""
         objeto = next((obj for obj in lista_alvo if obj.get_id() == id_alvo), None)
 
         if not objeto:
             print(f"Erro: ID '{id_alvo}' não encontrado.")
             return
 
-        # Atualiza na memória via setter
-        setter = getattr(objeto, setter_nome, None)
-        if not callable(setter):
-            print(f"Erro: Setter '{setter_nome}' não existe.")
+        # Normaliza o nome do método (aceita tanto 'nome' quanto 'set_nome')
+        campo_puro = campo.replace("set_", "")
+        nome_metodo = f"set_{campo_puro}"
+
+        # Verifica e executa o setter na memória
+        if hasattr(objeto, nome_metodo):
+            metodo = getattr(objeto, nome_metodo)
+            metodo(novo_valor)
+        else:
+            print(f"Erro: O campo '{campo_puro}' não existe ou não pode ser editado.")
             return
 
-        setter(novo_valor)
-
-        # Mapeia setter → campo no banco
+        # Mapeia o campo puro para a coluna correspondente no banco de dados
         mapa_campos = {
-            "set_nome":      "nome",
-            "set_email":     "email",
-            "set_telefone":  "telefone",
-            "set_endereco":  "endereco",
-            "set_peso":      "peso",
-            "set_historico": "historico",
-            "set_raca":      "raca",
-            "set_cor":       "cor",
-            "set_idade":     "idade",
+            "nome":      "nome",
+            "email":     "email",
+            "telefone":  "telefone",
+            "endereco":  "endereco",
+            "cpf":       "cpf",
+            "senha":     "senha",
+            "peso":      "peso",
+            "historico": "historico",
+            "raca":      "raca",
+            "cor":       "cor",
+            "idade":     "idade",
         }
 
-        campo_banco = mapa_campos.get(setter_nome)
+        campo_banco = mapa_campos.get(campo_puro)
         if campo_banco:
             if isinstance(objeto, Cliente):
                 banco.editar_cliente(id_alvo, campo_banco, novo_valor)
             elif isinstance(objeto, Animal):
                 banco.editar_animal(id_alvo, campo_banco, novo_valor)
+            elif isinstance(objeto, Usuario):
+                banco.editar_usuario(id_alvo, campo_banco, novo_valor)
 
+        # Registra no histórico de auditoria se um usuário disparou a ação
         if usuario_logado:
             banco.inserir_log(
                 usuario_logado.get_nome(),
                 f"Edição de {type(objeto).__name__} ID '{id_alvo}': {campo_banco} → {novo_valor}"
             )
 
-        print(f"✔ '{campo_banco}' do ID '{id_alvo}' atualizado para '{novo_valor}'.")
+        print(f"✔ Sucesso: {campo_banco} do ID {id_alvo} atualizado para {novo_valor}.")
+
 
     # ═══════════════════════════════════════════════
     # EXCLUIR
     # ═══════════════════════════════════════════════
-    def Editar(lista_alvo, id_alvo, campo, novo_valor):
-        # Procura o objeto pelo ID
-        objeto = next((obj for obj in lista_alvo if obj.get_id() == id_alvo), None)
-
-        if objeto:
-            # Constrói o nome do método setter, ex: campo 'nome' vira 'set_nome'
-            nome_metodo = f"set_{campo}"
-            
-            # Verifica se o método setter existe na classe do objeto
-            if hasattr(objeto, nome_metodo):
-                # Obtém a função do método e executa-a com o novo valor
-                metodo = getattr(objeto, nome_metodo)
-                metodo(novo_valor) 
-                print(f"Sucesso: {campo} do ID {id_alvo} atualizado para {novo_valor}.")
-            else:
-                print(f"Erro: O campo '{campo}' não existe ou não pode ser editado.")
-        else:
-            print(f"Erro: Registro com ID {id_alvo} não encontrado.")
 
     @staticmethod
     def Excluir(lista_alvo, id_alvo, usuario_logado=None):

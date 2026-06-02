@@ -95,7 +95,7 @@ def dropdown_campo(label, opcoes, largura=320, valor=None, on_change=None):
         text_style=ft.TextStyle(color=TEXTO_ESCURO, size=14),
         bgcolor=BRANCO,
         value=valor,
-        on_change=on_change,
+        on_select=on_change,
         options=[ft.dropdown.Option(o) for o in opcoes],
     )
 
@@ -677,18 +677,19 @@ def tela_principal(page: ft.Page):
                     mapa = {
                         "set_nome": f_nome.value,
                         "set_email": f_email.value,
+                        "cpf": f_cpf.value,
                         "set_telefone": f_telefone.value,
                         "set_endereco": f_endereco.value,
                     }
                     for setter, valor in mapa.items():
                         if valor:
                             Sistema.Editar(Sistema.lista_clientes, id_gerado,
-                                           setter, valor, usuario_logado)
+                                           setter, valor)
                     snack(page, f"Cliente '{f_nome.value}' atualizado!")
                 else:
                     cli = Cliente(id_gerado, f_nome.value, f_email.value,
                                   f_telefone.value, f_cpf.value, f_endereco.value)
-                    Sistema.Cadastrar(cli, usuario_logado)
+                    Sistema.Cadastrar(cli)
                     snack(page, f"Cliente '{f_nome.value}' cadastrado!")
 
                 fechar_dialogo()
@@ -1020,16 +1021,16 @@ def tela_principal(page: ft.Page):
                 "Raça": a.get_raca(),
                 "Peso": f"{a.get_peso()} kg",
                 "Cor": a.get_cor(),
-                "Histórico Clínico": a.get_historico_clinico(),
+                "Histórico Clínico": a.get_historico(),
                 "ID do Dono": a.get_id_dono()
             }
             # Adiciona propriedades específicas baseadas em herança estrutural
             if isinstance(a, Canino):
-                dados.update({"Porte": a.get_porte(), "Vacinado": a.get_vacinado(), "Castrado": a.get_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
+                dados.update({"Porte": a.get_porte(), "Vacinado": a.get_is_vacinado(), "Castrado": a.get_is_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
             elif isinstance(a, Felino):
-                dados.update({"Castrado": a.get_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
+                dados.update({"Castrado": a.get_is_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
             elif isinstance(a, Ave):
-                dados.update({"Número da Anilha": a.get_num_anilha(), "Asas Cortadas": a.get_asas_cortadas()})
+                dados.update({"Número da Anilha": a.get_anilha(), "Asas Cortadas": a.get_is_asas_cortadas()})
             elif isinstance(a, Roedor):
                 dados.update({"Espécie": a.get_especie(), "Tipo de Substrato": a.get_substrato()})
             return dados

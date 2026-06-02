@@ -21,3 +21,4 @@ class Pessoa(ABC):
     def set_nome(self, v):      self.__nome = v
     def set_email(self, v):     self.__email = v
     def set_telefone(self, v):  self.__telefone = v
+    def set_cpf(self, v):       self.__cpf = v
