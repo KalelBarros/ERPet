@@ -82,7 +82,6 @@ def campo_texto(label, hint="", senha=False, largura=320, valor=""):
     )
 
 
-
 def dropdown_campo(label, opcoes, largura=320, valor=None, on_change=None):
     """Dropdown estilizado."""
     return ft.Dropdown(
@@ -96,7 +95,7 @@ def dropdown_campo(label, opcoes, largura=320, valor=None, on_change=None):
         text_style=ft.TextStyle(color=TEXTO_ESCURO, size=14),
         bgcolor=BRANCO,
         value=valor,
-        on_select=on_change,
+        on_change=on_change,
         options=[ft.dropdown.Option(o) for o in opcoes],
     )
 
@@ -288,27 +287,24 @@ def tela_login(page: ft.Page, on_login_success):
         ),
     )
 
-    # 1. Defina o alinhamento diretamente na página
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-    # 2. Adicione o Container diretamente à página (sem a Column externa)
     page.add(
-    ft.Container(
-        content=ft.Column(
-            spacing=0,
-            controls=[decoracao, formulario],
-        ),
-        width=400,
-        border_radius=ft.border_radius.BorderRadius.all(24),
-        shadow=ft.BoxShadow(
-            blur_radius=18,
-            color=ft.Colors.with_opacity(0.5, TEXTO_ESCURO),
-            offset=ft.Offset(0, 0),
-        ),
+        ft.Container(
+            content=ft.Column(
+                spacing=0,
+                controls=[decoracao, formulario],
+            ),
+            width=400,
+            border_radius=ft.border_radius.BorderRadius.all(24),
+            shadow=ft.BoxShadow(
+                blur_radius=18,
+                color=ft.Colors.with_opacity(0.5, TEXTO_ESCURO),
+                offset=ft.Offset(0, 0),
+            ),
+        )
     )
-)
-
 
 
 # ═══════════════════════════════════════════════════════════
@@ -405,7 +401,6 @@ def tela_principal(page: ft.Page):
             global usuario_logado
             banco.inserir_log(usuario_logado.get_nome(), "Logout")
             usuario_logado = None
-            # Volta para login SEM reinicializar o Sistema (mantém dados em memória)
             tela_login(page, on_login_success=lambda: tela_principal(page))
 
         sidebar_container.content = ft.Container(
@@ -460,7 +455,6 @@ def tela_principal(page: ft.Page):
 
     construir_sidebar()
 
-    # ── Layout geral ─────────────────────────────────────
     page.add(
         ft.Row(
             expand=True,
@@ -475,6 +469,79 @@ def tela_principal(page: ft.Page):
             ],
         )
     )
+
+    # ════════════════════════════════════════════════════
+    # COMPONENTE DE BUSCA E FILTRO GENÉRICO (CORRIGIDO)
+    # ════════════════════════════════════════════════════
+    def criar_barra_busca_filtros(hint_busca, opcoes_filtro, on_change_callback):
+        campo_busca = ft.TextField(
+            hint_text=hint_busca,
+            prefix_icon=ft.Icons.SEARCH_ROUNDED,
+            expand=True,
+            height=45,
+            border_radius=10,
+            border_color=VERDE_MEDIO,
+            bgcolor=BRANCO,
+            text_style=ft.TextStyle(color=TEXTO_ESCURO, size=14), # O peso (weight) se necessário vai aqui dentro
+            on_change=on_change_callback
+        )
+        
+        dropdown_filtro = ft.Dropdown(
+            options=[ft.dropdown.Option("Todos")] + [ft.dropdown.Option(o) for o in opcoes_filtro],
+            value="Todos",
+            width=180,
+            height=45,
+            border_radius=10,
+            border_color=VERDE_MEDIO,
+            bgcolor=BRANCO,
+            text_style=ft.TextStyle(color=TEXTO_ESCURO, size=13),
+            on_select=on_change_callback
+        )
+        
+        return ft.Row(controls=[campo_busca, dropdown_filtro], spacing=12), campo_busca, dropdown_filtro
+
+    # ════════════════════════════════════════════════════
+    # MODAL DE DETALHES DE ITENS
+    # ════════════════════════════════════════════════════
+    def mostrar_modal_detalhes(titulo, dicionario_dados):
+        dialogo_ref = [None]
+        
+        linhas_detalhes = []
+        for chave, valor in dicionario_dados.items():
+            linhas_detalhes.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(f"{chave}:", weight=ft.FontWeight.BOLD, color=VERDE_ESCURO, size=14, width=130),
+                        ft.Text(str(valor), color=TEXTO_ESCURO, size=14, expand=True)
+                    ],
+                    vertical_alignment=ft.CrossAxisAlignment.START
+                )
+            )
+            linhas_detalhes.append(ft.Divider(color=ft.Colors.with_opacity(0.1, TEXTO_MEDIO), height=8))
+        
+        if linhas_detalhes:
+            linhas_detalhes.pop() # Remove o último divisor desnecessário
+
+        def fechar(e):
+            fechar_dialogo_global(page, dialogo_ref[0])
+
+        dialogo_ref[0] = ft.AlertDialog(
+            title=ft.Row(
+                controls=[
+                    ft.Text("🔍", size=22),
+                    ft.Text(titulo, weight=ft.FontWeight.BOLD, color=BRANCO)
+                ],
+                spacing=8
+            ),
+            content=ft.Container(
+                width=400,
+                padding=10,
+                content=ft.Column(controls=linhas_detalhes, spacing=8, tight=True, scroll=ft.ScrollMode.AUTO)
+            ),
+            actions=[botao_primario("Fechar", fechar, largura=120)],
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+        )
+        exibir_dialogo(page, dialogo_ref[0])
 
     # ════════════════════════════════════════════════════
     # DASHBOARD
@@ -500,15 +567,45 @@ def tela_principal(page: ft.Page):
             )
 
         logs_recentes = banco.listar_logs()[:5]
-        itens_log = [
-            ft.ListTile(
-                leading=ft.Icon(ft.Icons.CIRCLE, size=8, color=VERDE_CLARO),
-                title=ft.Text(acao, size=13, color=TEXTO_ESCURO),
-                subtitle=ft.Text(f"{usuario} • {data_hora}", size=11, color=TEXTO_MEDIO),
-                dense=True,
-            )
-            for data_hora, usuario, acao in logs_recentes
-        ] if logs_recentes else [ft.Text("Nenhuma atividade ainda.", color=TEXTO_MEDIO, size=13)]
+        
+        # Estado local da busca e filtros no Dashboard para a listagem interna de Atividades Recentes
+        col_logs = ft.Column(spacing=0)
+
+        def filtrar_logs(e):
+            texto = campo_b.value.strip().lower()
+            usuario_filtro = drop_f.value
+            
+            col_logs.controls.clear()
+            for data_hora, usuario, acao in logs_recentes:
+                match_texto = texto in acao.lower() or texto in usuario.lower() or texto in data_hora.lower()
+                match_usuario = usuario_filtro == "Todos" or usuario_filtro == usuario
+                
+                if match_texto and match_usuario:
+                    col_logs.controls.append(
+                        ft.ListTile(
+                            leading=ft.Icon(ft.Icons.CIRCLE, size=8, color=VERDE_CLARO),
+                            title=ft.Text(acao, size=13, color=TEXTO_ESCURO),
+                            subtitle=ft.Text(f"{usuario} • {data_hora}", size=11, color=TEXTO_MEDIO),
+                            trailing=ft.IconButton(
+                                icon=ft.Icons.ZOOM_IN_ROUNDED, 
+                                icon_color=VERDE_MEDIO,
+                                on_click=lambda ev, d=data_hora, u=usuario, a=acao: mostrar_modal_detalhes(
+                                    "Detalhes do Log", {"Data/Hora": d, "Usuário": u, "Ação Realizada": a}
+                                )
+                            ),
+                            dense=True,
+                        )
+                    )
+            if not col_logs.controls:
+                col_logs.controls.append(ft.Text("Nenhuma atividade correspondente.", color=TEXTO_MEDIO, size=13))
+            page.update()
+
+        # Extrai usuários únicos dos logs recentes para popular o filtro dinamicamente
+        usuarios_logs = list(set([l[1] for l in logs_recentes]))
+        barra_componente, campo_b, drop_f = criar_barra_busca_filtros("Buscar nas atividades recentes...", usuarios_logs, filtrar_logs)
+
+        # Dispara a renderização inicial dos logs
+        filtrar_logs(None)
 
         area_conteudo.controls += [
             ft.Text(f"Olá, {usuario_logado.get_nome()} 👋", size=24,
@@ -537,7 +634,9 @@ def tela_principal(page: ft.Page):
                             spacing=8,
                         ),
                         ft.Divider(height=16),
-                        *itens_log,
+                        barra_componente,
+                        ft.Container(height=10),
+                        col_logs,
                     ],
                     spacing=0,
                 ),
@@ -550,6 +649,7 @@ def tela_principal(page: ft.Page):
 
     def renderizar_clientes():
         dialogo_ref = [None]
+        col_listagem = ft.Column(spacing=10)
 
         def fechar_dialogo(e=None):
             if dialogo_ref[0]:
@@ -653,6 +753,17 @@ def tela_principal(page: ft.Page):
                         ),
                         ft.Row(
                             controls=[
+                                ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
+                                              tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                                  "Dados do Cliente", {
+                                                      "ID": c.get_id(),
+                                                      "Nome": c.get_nome(),
+                                                      "CPF": c.get_cpf(),
+                                                      "E-mail": c.get_email(),
+                                                      "Telefone": c.get_telefone(),
+                                                      "Endereço": c.get_endereco()
+                                                  }
+                                              )),
                                 ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_color=VERDE_MEDIO,
                                               tooltip="Editar", on_click=lambda e, cli=c: abrir_cadastro(e, cli)),
                                 ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
@@ -670,6 +781,29 @@ def tela_principal(page: ft.Page):
                 shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.with_opacity(0.05, TEXTO_ESCURO), offset=ft.Offset(0, 2)),
             )
 
+        def executar_busca_filtro(e):
+            texto = campo_b.value.strip().lower()
+            provedor_email = drop_f.value
+            
+            col_listagem.controls.clear()
+            for c in Sistema.lista_clientes:
+                match_texto = texto in c.get_nome().lower() or texto in c.get_cpf() or texto in c.get_email().lower()
+                
+                match_filtro = True
+                if provedor_email != "Todos":
+                    match_filtro = provedor_email.lower() in c.get_email().lower()
+                
+                if match_texto and match_filtro:
+                    col_listagem.controls.append(linha_cliente(c))
+            
+            if not col_listagem.controls:
+                col_listagem.controls.append(ft.Text("Nenhum cliente correspondente encontrado.", color=TEXTO_MEDIO))
+            page.update()
+
+        # Filtro por domínios comuns de e-mail cadastrados para Clientes
+        barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por nome, CPF ou e-mail...", ["@gmail.com", "@outlook.com", "@hotmail.com"], executar_busca_filtro)
+        executar_busca_filtro(None)
+
         area_conteudo.controls += [
             ft.Row(
                 controls=[
@@ -680,11 +814,9 @@ def tela_principal(page: ft.Page):
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(height=16),
-            ft.Column(
-                controls=[linha_cliente(c) for c in Sistema.lista_clientes]
-                         or [ft.Text("Nenhum cliente cadastrado.", color=TEXTO_MEDIO)],
-                spacing=10,
-            ),
+            barra_comp,
+            ft.Container(height=14),
+            col_listagem,
         ]
 
     # ════════════════════════════════════════════════════
@@ -693,6 +825,7 @@ def tela_principal(page: ft.Page):
 
     def renderizar_animais():
         dialogo_ref = [None]
+        col_listagem = ft.Column(spacing=10)
 
         def fechar_dialogo(e=None):
             if dialogo_ref[0]:
@@ -709,11 +842,9 @@ def tela_principal(page: ft.Page):
             f_historico = campo_texto("Histórico", largura=280)
             f_id_dono   = campo_texto("ID do dono (cliente)", largura=280)
             
-            # Coluna para os campos dinâmicos gerados ao mudar o tipo
             col_extras = ft.Column(spacing=12)
             msg = ft.Text("", color=ERRO, size=12)
 
-            # Função engatilhada pelo on_select do seletor de tipo
             def atualizar_campos_extras(ev):
                 tipo = ev.control.value
                 col_extras.controls.clear()
@@ -741,11 +872,9 @@ def tela_principal(page: ft.Page):
                         dropdown_campo("Substrato", ["Maravalha", "Papel", "Serragem"], largura=280),
                     ])
                 
-                # Renderiza e força a atualização visual imediatamente na interface
                 col_extras.update()
                 page.update()
 
-            # Criando o seletor principal chamando a sua estrutura com on_select mapeado
             f_tipo = dropdown_campo(
                 label="Tipo de animal",
                 opcoes=["Canino", "Felino", "Ave", "Roedor"],
@@ -753,7 +882,6 @@ def tela_principal(page: ft.Page):
                 on_change=atualizar_campos_extras
             )
 
-            # Varredura profunda e recursiva para extrair valores dos inputs com segurança
             def obtener_valor(componente):
                 if hasattr(componente, "value") and componente.value is not None:
                     return str(componente.value).strip()
@@ -792,7 +920,6 @@ def tela_principal(page: ft.Page):
                     dialogo_ref[0].update()
                     return
 
-                # Coleta estática dos campos padrão
                 val_sexo      = obtener_valor(f_sexo) or "M"
                 val_raca      = obtener_valor(f_raca)
                 val_peso      = obtener_valor(f_peso)
@@ -800,7 +927,6 @@ def tela_principal(page: ft.Page):
                 val_historico = obtener_valor(f_historico)
                 val_id_dono   = obtener_valor(f_id_dono)
                 
-                # Mapeamento dos valores inseridos na coluna extra dinâmica
                 extras = [obtener_valor(c) for c in col_extras.controls]
 
                 try:
@@ -833,7 +959,6 @@ def tela_principal(page: ft.Page):
                     msg.value = f"Erro: {ex}"
                     dialogo_ref[0].update()
 
-            # Montagem estrutural do layout com a col_extras posicionada abaixo do ID Dono
             dialogo_ref[0] = ft.AlertDialog(
                 title=ft.Text("Novo Animal", color=BRANCO, weight=ft.FontWeight.BOLD),
                 bgcolor=VERDE_CLARO,
@@ -843,16 +968,9 @@ def tela_principal(page: ft.Page):
                     padding=12,
                     content=ft.Column(
                         controls=[
-                            f_nome, 
-                            f_tipo, 
-                            f_idade, 
-                            f_sexo, 
-                            f_raca,
-                            f_peso, 
-                            f_cor, 
-                            f_historico, 
-                            f_id_dono,
-                            col_extras,  # 🐾 Renderiza os campos de Porte, Vacinado, etc., bem aqui!
+                            f_nome, f_tipo, f_idade, f_sexo, f_raca,
+                            f_peso, f_cor, f_historico, f_id_dono,
+                            col_extras,
                             msg
                         ],
                         spacing=5,
@@ -891,6 +1009,31 @@ def tela_principal(page: ft.Page):
             )
             exibir_dialogo(page, dialogo_ref[0])
 
+        def obter_detalhes_completos_animal(a):
+            type_name = type(a).__name__
+            dados = {
+                "ID": a.get_id(),
+                "Nome": a.get_nome(),
+                "Tipo Classe": type_name,
+                "Idade": f"{a.get_idade()} anos",
+                "Sexo": a.get_sexo(),
+                "Raça": a.get_raca(),
+                "Peso": f"{a.get_peso()} kg",
+                "Cor": a.get_cor(),
+                "Histórico Clínico": a.get_historico_clinico(),
+                "ID do Dono": a.get_id_dono()
+            }
+            # Adiciona propriedades específicas baseadas em herança estrutural
+            if isinstance(a, Canino):
+                dados.update({"Porte": a.get_porte(), "Vacinado": a.get_vacinado(), "Castrado": a.get_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
+            elif isinstance(a, Felino):
+                dados.update({"Castrado": a.get_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
+            elif isinstance(a, Ave):
+                dados.update({"Número da Anilha": a.get_num_anilha(), "Asas Cortadas": a.get_asas_cortadas()})
+            elif isinstance(a, Roedor):
+                dados.update({"Espécie": a.get_especie(), "Tipo de Substrato": a.get_substrato()})
+            return dados
+
         def linha_animal(a):
             type_name = type(a).__name__
             return ft.Container(
@@ -921,6 +1064,10 @@ def tela_principal(page: ft.Page):
                             padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                             border_radius=20,
                         ),
+                        ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
+                                      tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                          f"Ficha de {a.get_nome()}", obter_detalhes_completos_animal(a)
+                                      )),
                         ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
                                       tooltip="Remover",
                                       on_click=lambda e, an=a: confirmar_excluir(e, an)),
@@ -936,6 +1083,27 @@ def tela_principal(page: ft.Page):
                                     offset=ft.Offset(0, 2)),
             )
 
+        def executar_busca_filtro(e):
+            texto = campo_b.value.strip().lower()
+            tipo_selecionado = drop_f.value
+            
+            col_listagem.controls.clear()
+            for a in Sistema.lista_animais:
+                type_name = type(a).__name__
+                match_texto = texto in a.get_nome().lower() or texto in a.get_raca().lower() or texto in a.get_id_dono().lower()
+                match_tipo = tipo_selecionado == "Todos" or tipo_selecionado == type_name
+                
+                if match_texto and match_tipo:
+                    col_listagem.controls.append(linha_animal(a))
+            
+            if not col_listagem.controls:
+                col_listagem.controls.append(ft.Text("Nenhum animal correspondente encontrado.", color=TEXTO_MEDIO))
+            page.update()
+
+        # Filtro por sub-classe taxonômica do animal
+        barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por nome do pet, raça ou ID do dono...", ["Canino", "Felino", "Ave", "Roedor"], executar_busca_filtro)
+        executar_busca_filtro(None)
+
         area_conteudo.controls += [
             ft.Row(
                 controls=[
@@ -946,11 +1114,9 @@ def tela_principal(page: ft.Page):
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(height=16),
-            ft.Column(
-                controls=[linha_animal(a) for a in Sistema.lista_animais]
-                         or [ft.Text("Nenhum animal cadastrado.", color=TEXTO_MEDIO)],
-                spacing=10,
-            ),
+            barra_comp,
+            ft.Container(height=14),
+            col_listagem,
         ]
     
     # ════════════════════════════════════════════════════
@@ -965,6 +1131,7 @@ def tela_principal(page: ft.Page):
             return
 
         dialogo_ref = [None]
+        col_listagem = ft.Column(spacing=10)
 
         def fechar_dialogo(e=None):
             if dialogo_ref[0]:
@@ -1060,6 +1227,17 @@ def tela_principal(page: ft.Page):
                             padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                             border_radius=20,
                         ),
+                        ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
+                                      tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                          "Perfil do Usuário Interno", {
+                                              "ID Sistema": u.get_id(),
+                                              "Nome": u.get_nome(),
+                                              "E-mail": u.get_email(),
+                                              "Telefone Corporativo": u.get_telefone(),
+                                              "CPF": u.get_cpf(),
+                                              "Cargo de Acesso": "Administrador / Superuser" if is_adm else "Funcionário Operacional"
+                                          }
+                                      )),
                         ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
                                       tooltip="Remover",
                                       on_click=lambda e, us=u: confirmar_excluir(e, us)),
@@ -1075,6 +1253,31 @@ def tela_principal(page: ft.Page):
                                     offset=ft.Offset(0, 2)),
             )
 
+        def executar_busca_filtro(e):
+            texto = campo_b.value.strip().lower()
+            tipo_perfil = drop_f.value
+            
+            col_listagem.controls.clear()
+            for u in Sistema.lista_usuarios:
+                match_texto = texto in u.get_nome().lower() or texto in u.get_email().lower() or texto in u.get_cpf()
+                
+                match_perfil = True
+                if tipo_perfil == "Administrador":
+                    match_perfil = u.get_is_superuser()
+                elif tipo_perfil == "Funcionário":
+                    match_perfil = not u.get_is_superuser()
+                
+                if match_texto and match_perfil:
+                    col_listagem.controls.append(linha_usuario(u))
+            
+            if not col_listagem.controls:
+                col_listagem.controls.append(ft.Text("Nenhum usuário correspondente encontrado.", color=TEXTO_MEDIO))
+            page.update()
+
+        # Filtro estruturado por privilégio de nível de usuário
+        barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por nome, e-mail ou CPF...", ["Administrador", "Funcionário"], executar_busca_filtro)
+        executar_busca_filtro(None)
+
         area_conteudo.controls += [
             ft.Row(
                 controls=[
@@ -1085,11 +1288,9 @@ def tela_principal(page: ft.Page):
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(height=16),
-            ft.Column(
-                controls=[linha_usuario(u) for u in Sistema.lista_usuarios]
-                         or [ft.Text("Nenhum usuário cadastrado.", color=TEXTO_MEDIO)],
-                spacing=10,
-            ),
+            barra_comp,
+            ft.Container(height=14),
+            col_listagem,
         ]
 
     # ════════════════════════════════════════════════════
@@ -1100,6 +1301,7 @@ def tela_principal(page: ft.Page):
         from Classes.Subclasses.Servicos import Estoque as EstoqueClass
 
         dialogo_ref = [None]
+        col_listagem = ft.Column(spacing=10)
 
         def fechar_dialogo(e=None):
             if dialogo_ref[0]:
@@ -1183,6 +1385,18 @@ def tela_principal(page: ft.Page):
                             padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                             border_radius=20,
                         ),
+                        ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
+                                      tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                          "Metadados do Produto", {
+                                              "Código ID": p.get_id(),
+                                              "Nome Comercial": p.get_nome(),
+                                              "Categoria Alocada": p.get_categoria(),
+                                              "Quantidade Atual": p.get_quantidade(),
+                                              "Preço Unitário": f"R$ {p.get_preco_unitario():.2f}",
+                                              "Estoque Mínimo Alerta": p.get_qtd_minima(),
+                                              "Status de Reposição": "🚨 CRÍTICO - REPOOR JÁ" if alerta else "✓ SEGURO"
+                                          }
+                                      ))
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1195,6 +1409,31 @@ def tela_principal(page: ft.Page):
                                     offset=ft.Offset(0, 2)),
             )
 
+        def executar_busca_filtro(e):
+            texto = campo_b.value.strip().lower()
+            categoria = drop_f.value
+            
+            col_listagem.controls.clear()
+            for p in Sistema.lista_estoque:
+                match_texto = texto in p.get_nome().lower() or texto in p.get_categoria().lower()
+                
+                match_cat = True
+                if categoria == "Abaixo Mínimo (Alerta)":
+                    match_cat = p.get_quantidade() <= p.get_qtd_minima()
+                elif categoria != "Todos":
+                    match_cat = p.get_categoria() == categoria
+                
+                if match_texto and match_cat:
+                    col_listagem.controls.append(linha_estoque(p))
+            
+            if not col_listagem.controls:
+                col_listagem.controls.append(ft.Text("Nenhum item em estoque corresponde aos critérios.", color=TEXTO_MEDIO))
+            page.update()
+
+        # Filtro contendo categorias dinâmicas e o status crítico de alerta de baixo estoque
+        barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar produto...", ["Ração", "Medicamento", "Higiene", "Acessório", "Abaixo Mínimo (Alerta)"], executar_busca_filtro)
+        executar_busca_filtro(None)
+
         area_conteudo.controls += [
             ft.Row(
                 controls=[
@@ -1205,11 +1444,9 @@ def tela_principal(page: ft.Page):
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(height=16),
-            ft.Column(
-                controls=[linha_estoque(p) for p in Sistema.lista_estoque]
-                         or [ft.Text("Nenhum produto no estoque.", color=TEXTO_MEDIO)],
-                spacing=10,
-            ),
+            barra_comp,
+            ft.Container(height=14),
+            col_listagem,
         ]
 
     # ════════════════════════════════════════════════════
@@ -1220,6 +1457,7 @@ def tela_principal(page: ft.Page):
         from Classes.Subclasses.Servicos import Servico as ServicoClass
 
         dialogo_ref = [None]
+        col_listagem = ft.Column(spacing=10)
 
         def fechar_dialogo(e=None):
             if dialogo_ref[0]:
@@ -1292,6 +1530,17 @@ def tela_principal(page: ft.Page):
                             spacing=2,
                             expand=True,
                         ),
+                        ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
+                                      tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                          "Ordem de Serviço", {
+                                              "Código Protocolo": s.get_id(),
+                                              "Tipo Procedimento": s.get_tipo(),
+                                              "Valor Cobrado": f"R$ {s.get_preco():.2f}",
+                                              "ID Identificador Animal": s.get_id_animal(),
+                                              "ID Funcionário Executor": s.get_id_funcionario(),
+                                              "Data/Hora Abertura": s.get_data_hora().strftime('%d/%m/%Y às %H:%M:%S')
+                                          }
+                                      ))
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1304,6 +1553,26 @@ def tela_principal(page: ft.Page):
                                     offset=ft.Offset(0, 2)),
             )
 
+        def executar_busca_filtro(e):
+            texto = campo_b.value.strip().lower()
+            tipo_servico = drop_f.value
+            
+            col_listagem.controls.clear()
+            for s in Sistema.lista_servicos:
+                match_texto = texto in s.get_tipo().lower() or texto in s.get_id_animal().lower()
+                match_tipo = tipo_servico == "Todos" or s.get_tipo() == tipo_servico
+                
+                if match_texto and match_tipo:
+                    col_listagem.controls.append(linha_servico(s))
+            
+            if not col_listagem.controls:
+                col_listagem.controls.append(ft.Text("Nenhum histórico de serviço encontrado.", color=TEXTO_MEDIO))
+            page.update()
+
+        # Filtro fixo por tipos catalogados de serviços executáveis
+        barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por tipo ou ID do animal...", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"], executar_busca_filtro)
+        executar_busca_filtro(None)
+
         area_conteudo.controls += [
             ft.Row(
                 controls=[
@@ -1314,11 +1583,9 @@ def tela_principal(page: ft.Page):
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             ft.Container(height=16),
-            ft.Column(
-                controls=[linha_servico(s) for s in Sistema.lista_servicos]
-                         or [ft.Text("Nenhum serviço registrado.", color=TEXTO_MEDIO)],
-                spacing=10,
-            ),
+            barra_comp,
+            ft.Container(height=14),
+            col_listagem,
         ]
 
     # ════════════════════════════════════════════════════
@@ -1333,6 +1600,7 @@ def tela_principal(page: ft.Page):
             return
 
         logs = banco.listar_logs()
+        col_listagem = ft.Column(spacing=8)
 
         def linha_log(data_hora, usuario, acao):
             return ft.Container(
@@ -1347,6 +1615,14 @@ def tela_principal(page: ft.Page):
                             spacing=2,
                             expand=True,
                         ),
+                        ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
+                                      tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                          "Log de Auditoria", {
+                                              "Carimbo de Data/Hora": data_hora,
+                                              "Operador": usuario,
+                                              "Descrição Completa da Ação": acao
+                                          }
+                                      ))
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1359,19 +1635,36 @@ def tela_principal(page: ft.Page):
                                     offset=ft.Offset(0, 2)),
             )
 
+        def executar_busca_filtro(e):
+            texto = campo_b.value.strip().lower()
+            usuario_filtro = drop_f.value
+            
+            col_listagem.controls.clear()
+            for data_hora, usuario, acao in logs:
+                match_texto = texto in acao.lower() or texto in usuario.lower() or texto in data_hora.lower()
+                match_usuario = usuario_filtro == "Todos" or usuario == usuario_filtro
+                
+                if match_texto and match_usuario:
+                    col_listagem.controls.append(linha_log(data_hora, usuario, acao))
+            
+            if not col_listagem.controls:
+                col_listagem.controls.append(ft.Text("Nenhum registro de log localizado.", color=TEXTO_MEDIO))
+            page.update()
+
+        # Coleta a lista completa de operadores de forma limpa para injetar no dropdown do filtro
+        usuarios_unicos_sistema = list(set([l[1] for l in logs]))
+        barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar termos contidos nas descrições de auditoria...", usuarios_unicos_sistema, executar_busca_filtro)
+        executar_busca_filtro(None)
+
         area_conteudo.controls += [
             titulo_secao("📋 Logs de Atividade"),
             ft.Container(height=16),
-            ft.Column(
-                controls=[linha_log(*l) for l in logs]
-                         or [ft.Text("Nenhuma atividade registrada.", color=TEXTO_MEDIO)],
-                spacing=8,
-            ),
+            barra_comp,
+            ft.Container(height=14),
+            col_listagem,
         ]
 
-    # Renderiza dashboard ao iniciar
     navegar("dashboard")
-
 
 
 # ═══════════════════════════════════════════════════════════
@@ -1385,27 +1678,23 @@ def main(page: ft.Page):
     page.padding       = 0
     page.fonts         = {}
     
-    # FORMATO CORRETO PARA APLICAR A SEMENTE DE COR E OS AJUSTES DO POPUP:
-    page.theme_mode = ft.ThemeMode.LIGHT  # Garante contraste no modo claro
+    page.theme_mode = ft.ThemeMode.LIGHT
     page.theme = ft.Theme(
-        color_scheme_seed=VERDE_ESCURO,   # Mantém sua identidade verde global
+        color_scheme_seed=VERDE_ESCURO,
         color_scheme=ft.ColorScheme(
-            surface=BRANCO,               # Sobrescreve o fundo do popup para branco
-            on_surface=TEXTO_ESCURO       # Sobrescreve o texto das opções para escuro
+            surface=BRANCO,
+            on_surface=TEXTO_ESCURO
         )
     )
 
-    # Inicializa banco e memória
     Sistema.inicializar()
 
-    # Cria admin padrão se não houver usuários
     if not Sistema.lista_usuarios:
         admin = Administrador("1", "admin", "admin@erpet.com",
                               "0000", "000.000.000-00", "admin123")
         Sistema.Cadastrar(admin)
 
     tela_login(page, on_login_success=lambda: tela_principal(page))
-
 
 
 ft.run(main)
