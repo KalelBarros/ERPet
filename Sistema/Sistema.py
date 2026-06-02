@@ -91,19 +91,18 @@ class Sistema:
 
     @staticmethod
     def Cadastrar(objeto, usuario_logado=None):
-        """Salva o objeto na memória e no banco, e registra o log."""
-
-
-    @staticmethod
-    def Cadastrar(objeto):
+        """Salva o objeto na memória e no banco, e registra o log de forma segura."""
         from Classes.Subclasses.Servicos.Servico import Servico
+
+        # Define qual usuário usar para o Log (usa o passado por parâmetro ou o global do Main)
+        usuario_acao = usuario_logado or Main.usuario_logado
 
         if isinstance(objeto, Cliente):
             Sistema.lista_clientes.append(objeto)
             banco.inserir_cliente(objeto)
-            if Main.usuario_logado:
+            if usuario_acao:
                 banco.inserir_log(
-                    Main.usuario_logado.get_nome(),
+                    usuario_acao.get_nome(),
                     f"Cadastro de cliente: {objeto.get_nome()}"
                 )
             print(f"✔ Cliente '{objeto.get_nome()}' cadastrado com sucesso!")
@@ -111,28 +110,27 @@ class Sistema:
         elif isinstance(objeto, Usuario):
             Sistema.lista_usuarios.append(objeto)
             banco.inserir_usuario(objeto)
-            if Main.usuario_logado:
+            if usuario_acao:
                 banco.inserir_log(
-                    Main.usuario_logado.get_nome(),
+                    usuario_acao.get_nome(),
                     f"Cadastro de usuário: {objeto.get_nome()} ({type(objeto).__name__})"
                 )
             print(f"✔ Usuário '{objeto.get_nome()}' ({type(objeto).__name__}) cadastrado!")
 
         elif isinstance(objeto, Animal):
             Sistema.lista_animais.append(objeto)
-
             banco.inserir_animal(objeto)
-            if Main.usuario_logado:
+            if usuario_acao:
                 banco.inserir_log(
-                    Main.usuario_logado.get_nome(),
+                    usuario_acao.get_nome(),
                     f"Cadastro de animal: {objeto.get_nome()} ({type(objeto).__name__})"
                 )
             print(f"✔ Animal '{objeto.get_nome()}' cadastrado com sucesso!")
 
-            print(f"Animal {objeto.get_nome()} cadastrado com sucesso!")
         elif isinstance(objeto, Servico):
             Sistema.lista_servicos.append(objeto)
             print(f"Serviço '{objeto.get_tipo()}' registrado com sucesso!")
+            
         else:
             print("Erro: Tipo de objeto desconhecido.")
 

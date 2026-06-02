@@ -88,3 +88,31 @@
 [2026-06-01 03:08:03] admin - Login no sistema
 [2026-06-01 03:09:19] admin - Login no sistema
 [2026-06-01 03:26:45] admin - Login no sistema
+[2026-06-01 22:19:25] admin - Login no sistema
+[2026-06-01 22:22:10] admin - Login no sistema
+[2026-06-01 22:35:09] admin - Login no sistema
+[2026-06-01 22:35:37] admin - Login no sistema
+[2026-06-01 22:39:00] admin - Login no sistema
+[2026-06-01 22:40:52] admin - Login no sistema
+[2026-06-01 22:46:38] admin - Login no sistema
+[2026-06-01 22:50:03] admin - Login no sistema
+[2026-06-01 23:01:22] admin - Login no sistema
+[2026-06-01 23:02:47] admin - Login no sistema
+[2026-06-01 23:04:54] admin - Login no sistema
+[2026-06-01 23:07:43] admin - Login no sistema
+[2026-06-01 23:11:49] admin - Login no sistema
+[2026-06-02 00:09:37] admin - Login no sistema
+[2026-06-02 00:14:03] admin - Login no sistema
+[2026-06-02 00:15:12] admin - Login no sistema
+[2026-06-02 00:20:42] admin - Login no sistema
+[2026-06-02 00:22:26] admin - Login no sistema
+[2026-06-02 00:33:32] admin - Login no sistema
+[2026-06-02 00:38:41] admin - Login no sistema
+[2026-06-02 00:45:48] admin - Login no sistema
+[2026-06-02 00:54:01] admin - Login no sistema
+[2026-06-02 01:25:56] admin - Login no sistema
+[2026-06-02 01:33:31] admin - Login no sistema
+[2026-06-02 01:34:03] admin - Cadastro de animal: Apolo (Canino)
+[2026-06-02 01:36:49] admin - Cadastro de animal: Gato (Felino)
+[2026-06-02 01:40:18] admin - Cadastro de animal: asd (Roedor)
+[2026-06-02 01:41:14] admin - Cadastro de animal: dsdas (Ave)

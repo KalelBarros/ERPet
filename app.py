@@ -83,7 +83,7 @@ def campo_texto(label, hint="", senha=False, largura=320, valor=""):
 
 
 
-def dropdown_campo(label, opcoes, largura=320, valor=None):
+def dropdown_campo(label, opcoes, largura=320, valor=None, on_change=None):
     """Dropdown estilizado."""
     return ft.Dropdown(
         label=label,
@@ -96,6 +96,7 @@ def dropdown_campo(label, opcoes, largura=320, valor=None):
         text_style=ft.TextStyle(color=TEXTO_ESCURO, size=14),
         bgcolor=BRANCO,
         value=valor,
+        on_select=on_change,
         options=[ft.dropdown.Option(o) for o in opcoes],
     )
 
@@ -697,120 +698,169 @@ def tela_principal(page: ft.Page):
             if dialogo_ref[0]:
                 fechar_dialogo_global(page, dialogo_ref[0])
 
-        tipo_selecionado = ft.Ref[ft.Dropdown]()
-        campos_extras    = ft.Ref[ft.Column]()
-
-        def atualizar_campos_extras(e=None):
-            tipo = tipo_selecionado.current.value
-            campos_extras.current.controls.clear()
-
-            if tipo == "Canino":
-                campos_extras.current.controls += [
-                    dropdown_campo("Porte", ["Pequeno", "Médio", "Grande", "GG"], largura=280),
-                    dropdown_campo("Vacinado?", ["Sim", "Não"], largura=280),
-                    dropdown_campo("Castrado?", ["Sim", "Não"], largura=280),
-                    dropdown_campo("Tipo de pelo", ["Curto", "Médio", "Longo"], largura=280),
-                ]
-            elif tipo == "Felino":
-                campos_extras.current.controls += [
-                    dropdown_campo("Castrado?", ["Sim", "Não"], largura=280),
-                    dropdown_campo("Tipo de pelo", ["Curto", "Longo"], largura=280),
-                ]
-            elif tipo == "Ave":
-                campos_extras.current.controls += [
-                    campo_texto("Número da anilha", largura=280),
-                    dropdown_campo("Asas cortadas?", ["Sim", "Não"], largura=280),
-                ]
-            elif tipo == "Roedor":
-                campos_extras.current.controls += [
-                    dropdown_campo("Espécie", ["Hamster", "Coelho", "Porquinho-da-índia", "Rato"], largura=280),
-                    dropdown_campo("Substrato", ["Maravalha", "Papel", "Serragem"], largura=280),
-                ]
-
-            page.update()
-
         def abrir_cadastro(e):
             id_gerado   = gerar_id("ANI_")
-            f_nome     = campo_texto("Nome do animal", largura=280)
-            f_idade    = campo_texto("Idade (anos)", largura=280)
-            f_sexo     = dropdown_campo("Sexo", ["M", "F"], largura=280)
-            f_raca     = campo_texto("Raça", largura=280)
-            f_peso     = campo_texto("Peso (kg)", largura=280)
-            f_cor      = campo_texto("Cor", largura=280)
+            f_nome      = campo_texto("Nome do animal", largura=280)
+            f_idade     = campo_texto("Idade (anos)", largura=280)
+            f_sexo      = dropdown_campo("Sexo", ["M", "F"], largura=280)
+            f_raca      = campo_texto("Raça", largura=280)
+            f_peso      = campo_texto("Peso (kg)", largura=280)
+            f_cor       = campo_texto("Cor", largura=280)
             f_historico = campo_texto("Histórico", largura=280)
-            f_id_dono  = campo_texto("ID do dono (cliente)", largura=280)
-            f_tipo     = dropdown_campo("Tipo de animal",
-                                        ["Canino", "Felino", "Ave", "Roedor"], largura=280)
-            f_tipo.ref = tipo_selecionado
-            f_tipo.on_change = atualizar_campos_extras
-
-            col_extras = ft.Column(spacing=12, ref=campos_extras)
+            f_id_dono   = campo_texto("ID do dono (cliente)", largura=280)
+            
+            # Coluna para os campos dinâmicos gerados ao mudar o tipo
+            col_extras = ft.Column(spacing=12)
             msg = ft.Text("", color=ERRO, size=12)
 
+            # Função engatilhada pelo on_select do seletor de tipo
+            def atualizar_campos_extras(ev):
+                tipo = ev.control.value
+                col_extras.controls.clear()
+
+                if tipo == "Canino":
+                    col_extras.controls.extend([
+                        dropdown_campo("Porte", ["Pequeno", "Médio", "Grande", "GG"], largura=280),
+                        dropdown_campo("Vacinado?", ["Sim", "Não"], largura=280),
+                        dropdown_campo("Castrado?", ["Sim", "Não"], largura=280),
+                        dropdown_campo("Tipo de pelo", ["Curto", "Médio", "Longo"], largura=280),
+                    ])
+                elif tipo == "Felino":
+                    col_extras.controls.extend([
+                        dropdown_campo("Castrado?", ["Sim", "Não"], largura=280),
+                        dropdown_campo("Tipo de pelo", ["Curto", "Longo"], largura=280),
+                    ])
+                elif tipo == "Ave":
+                    col_extras.controls.extend([
+                        campo_texto("Número da anilha", largura=280),
+                        dropdown_campo("Asas cortadas?", ["Sim", "Não"], largura=280),
+                    ])
+                elif tipo == "Roedor":
+                    col_extras.controls.extend([
+                        dropdown_campo("Espécie", ["Hamster", "Coelho", "Porquinho-da-índia", "Rato"], largura=280),
+                        dropdown_campo("Substrato", ["Maravalha", "Papel", "Serragem"], largura=280),
+                    ])
+                
+                # Renderiza e força a atualização visual imediatamente na interface
+                col_extras.update()
+                page.update()
+
+            # Criando o seletor principal chamando a sua estrutura com on_select mapeado
+            f_tipo = dropdown_campo(
+                label="Tipo de animal",
+                opcoes=["Canino", "Felino", "Ave", "Roedor"],
+                largura=280,
+                on_change=atualizar_campos_extras
+            )
+
+            # Varredura profunda e recursiva para extrair valores dos inputs com segurança
+            def obtener_valor(componente):
+                if hasattr(componente, "value") and componente.value is not None:
+                    return str(componente.value).strip()
+                
+                if hasattr(componente, "controls"):
+                    sub_controles = componente.controls
+                elif hasattr(componente, "content"):
+                    if hasattr(componente.content, "controls"):
+                        sub_controles = componente.content.controls
+                    else:
+                        sub_controles = [componente.content]
+                else:
+                    sub_controles = []
+
+                for sub in sub_controles:
+                    if isinstance(sub, (ft.TextField, ft.Dropdown)):
+                        return str(sub.value).strip() if sub.value is not None else ""
+                    resultado_interno = obtener_valor(sub)
+                    if resultado_interno:
+                        return resultado_interno
+                        
+                return ""
+
             def salvar(e):
-                tipo = tipo_selecionado.current.value
-                if not f_nome.value or not f_idade.value:
+                tipo = obtener_valor(f_tipo)
+                val_nome = obtener_valor(f_nome)
+                val_idade = obtener_valor(f_idade)
+
+                if not val_nome or not val_idade:
                     msg.value = "Nome e Idade são obrigatórios."
-                    page.update()
+                    dialogo_ref[0].update()
                     return
+                    
                 if not tipo:
                     msg.value = "Selecione o tipo de animal."
-                    page.update()
+                    dialogo_ref[0].update()
                     return
 
-                extras = campos_extras.current.controls
+                # Coleta estática dos campos padrão
+                val_sexo      = obtener_valor(f_sexo) or "M"
+                val_raca      = obtener_valor(f_raca)
+                val_peso      = obtener_valor(f_peso)
+                val_cor       = obtener_valor(f_cor)
+                val_historico = obtener_valor(f_historico)
+                val_id_dono   = obtener_valor(f_id_dono)
+                
+                # Mapeamento dos valores inseridos na coluna extra dinâmica
+                extras = [obtener_valor(c) for c in col_extras.controls]
 
                 try:
                     if tipo == "Canino":
-                        animal = Canino(id_gerado, f_nome.value, int(f_idade.value),
-                                        f_sexo.value or "M", f_raca.value, float(f_peso.value or 0),
-                                        f_cor.value, f_historico.value, f_id_dono.value,
-                                        extras[0].value, extras[1].value,
-                                        extras[2].value, extras[3].value)
+                        animal = Canino(id_gerado, val_nome, int(val_idade),
+                                        val_sexo, val_raca, float(val_peso or 0),
+                                        val_cor, val_historico, val_id_dono,
+                                        extras[0], extras[1], extras[2], extras[3])
                     elif tipo == "Felino":
-                        animal = Felino(id_gerado, f_nome.value, int(f_idade.value),
-                                        f_sexo.value or "M", f_raca.value, float(f_peso.value or 0),
-                                        f_cor.value, f_historico.value, f_id_dono.value,
-                                        extras[0].value, extras[1].value)
+                        animal = Felino(id_gerado, val_nome, int(val_idade),
+                                        val_sexo, val_raca, float(val_peso or 0),
+                                        val_cor, val_historico, val_id_dono,
+                                        extras[0], extras[1])
                     elif tipo == "Ave":
-                        animal = Ave(id_gerado, f_nome.value, int(f_idade.value),
-                                     f_sexo.value or "M", f_raca.value, float(f_peso.value or 0),
-                                     f_cor.value, f_historico.value, f_id_dono.value,
-                                     extras[0].value, extras[1].value)
+                        animal = Ave(id_gerado, val_nome, int(val_idade),
+                                     val_sexo, val_raca, float(val_peso or 0),
+                                     val_cor, val_historico, val_id_dono,
+                                     extras[0], extras[1])
                     elif tipo == "Roedor":
-                        animal = Roedor(id_gerado, f_nome.value, int(f_idade.value),
-                                        f_sexo.value or "M", f_raca.value, float(f_peso.value or 0),
-                                        f_cor.value, f_historico.value, f_id_dono.value,
-                                        extras[0].value, extras[1].value)
+                        animal = Roedor(id_gerado, val_nome, int(val_idade),
+                                        val_sexo, val_raca, float(val_peso or 0),
+                                        val_cor, val_historico, val_id_dono,
+                                        extras[0], extras[1])
 
                     Sistema.Cadastrar(animal, usuario_logado)
-                    snack(page, f"Animal '{f_nome.value}' cadastrado!")
+                    snack(page, f"Animal '{val_nome}' cadastrado!")
                     fechar_dialogo()
                     navegar("animais")
                 except Exception as ex:
                     msg.value = f"Erro: {ex}"
-                    page.update()
+                    dialogo_ref[0].update()
 
+            # Montagem estrutural do layout com a col_extras posicionada abaixo do ID Dono
             dialogo_ref[0] = ft.AlertDialog(
                 title=ft.Text("Novo Animal", color=BRANCO, weight=ft.FontWeight.BOLD),
                 bgcolor=VERDE_CLARO,
-                 
                 content=ft.Container(
-                border_radius=12,  # Deixa os cantos da borda arredondados
-                border=ft.Border.all(1.5, VERDE_MEDIO),  # 🟢 ADICIONA A BORDA AQUI (B maiúsculo)
-                padding=12,  # Adiciona um espaço interno para os campos não colarem na borda
-        
-                # Sua coluna original entra aqui como conteúdo do Container:
-                content=ft.Column(
-                controls=[f_nome, f_tipo, f_idade, f_sexo, f_raca,
-                       f_peso, f_cor, f_historico, f_id_dono,
-                       col_extras, msg],
-                spacing=5,
-            width=300,
-            height=420,
-            scroll=ft.ScrollMode.ALWAYS,
-        )
-    ),
+                    border_radius=12,
+                    border=ft.Border.all(1.5, VERDE_MEDIO),
+                    padding=12,
+                    content=ft.Column(
+                        controls=[
+                            f_nome, 
+                            f_tipo, 
+                            f_idade, 
+                            f_sexo, 
+                            f_raca,
+                            f_peso, 
+                            f_cor, 
+                            f_historico, 
+                            f_id_dono,
+                            col_extras,  # 🐾 Renderiza os campos de Porte, Vacinado, etc., bem aqui!
+                            msg
+                        ],
+                        spacing=5,
+                        width=300,
+                        height=420,
+                        scroll=ft.ScrollMode.ALWAYS,
+                    )
+                ),
                 actions=[
                     botao_secundario("Cancelar", fechar_dialogo, largura=130),
                     botao_primario("Salvar", salvar, largura=130),
@@ -842,12 +892,12 @@ def tela_principal(page: ft.Page):
             exibir_dialogo(page, dialogo_ref[0])
 
         def linha_animal(a):
-            tipo = type(a).__name__
+            type_name = type(a).__name__
             return ft.Container(
                 content=ft.Row(
                     controls=[
                         ft.Container(
-                            content=ft.Text(emoji_tipo(tipo), size=26),
+                            content=ft.Text(emoji_tipo(type_name), size=26),
                             bgcolor=BEGE,
                             border_radius=10,
                             padding=10,
@@ -857,7 +907,7 @@ def tela_principal(page: ft.Page):
                                 ft.Text(a.get_nome(), size=15,
                                         weight=ft.FontWeight.W_600, color=TEXTO_ESCURO),
                                 ft.Text(
-                                    f"{tipo} • {a.get_raca()} • {a.get_idade()} anos • Dono: {a.get_id_dono()}",
+                                    f"{type_name} • {a.get_raca()} • {a.get_idade()} anos • Dono: {a.get_id_dono()}",
                                     size=12, color=TEXTO_MEDIO,
                                 ),
                             ],
@@ -865,7 +915,7 @@ def tela_principal(page: ft.Page):
                             expand=True,
                         ),
                         ft.Container(
-                            content=ft.Text(tipo, size=11, color=BRANCO,
+                            content=ft.Text(type_name, size=11, color=BRANCO,
                                             weight=ft.FontWeight.W_600),
                             bgcolor=VERDE_MEDIO,
                             padding=ft.Padding.symmetric(horizontal=10, vertical=4),
@@ -902,7 +952,7 @@ def tela_principal(page: ft.Page):
                 spacing=10,
             ),
         ]
-
+    
     # ════════════════════════════════════════════════════
     # USUÁRIOS (só admin)
     # ════════════════════════════════════════════════════
