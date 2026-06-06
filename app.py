@@ -7,8 +7,6 @@
 import sys
 import os
 import flet as ft
-import uuid
-import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -50,13 +48,19 @@ usuario_logado = None
 # UTILITÁRIOS — Geração de IDs
 # ═══════════════════════════════════════════════════════════
 
-def gerar_id(prefixo=""):
-    """Gera um ID único usando UUID. Útil para criar IDs automáticos."""
-    timestamp = str(int(time.time() * 1000))[-8:]  # últimos 8 dígitos do timestamp
-    uuid_short = str(uuid.uuid4()).replace("-", "")[:8]  # primeiros 8 chars do UUID
-    return f"{prefixo}{uuid_short}{timestamp}" if prefixo else f"{uuid_short}{timestamp}"
-
-
+def proximo_id(tabela):
+    """Gera o próximo ID numérico baseado no banco de dados."""
+    conn = banco.conectar()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"SELECT MAX(CAST(id AS INTEGER)) FROM {tabela}")
+        row = cursor.fetchone()
+        ultimo = row[0] if row[0] is not None else 0
+        return str(ultimo + 1)
+    except:
+        return "1"
+    finally:
+        conn.close()
 # ═══════════════════════════════════════════════════════════
 # COMPONENTES REUTILIZÁVEIS
 # ═══════════════════════════════════════════════════════════
@@ -566,46 +570,82 @@ def tela_principal(page: ft.Page):
                 shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.with_opacity(0.07, TEXTO_ESCURO), offset=ft.Offset(0, 3)),
             )
 
-        logs_recentes = banco.listar_logs()[:5]
-        
-        # Estado local da busca e filtros no Dashboard para a listagem interna de Atividades Recentes
-        col_logs = ft.Column(spacing=0)
+        is_admin = usuario_logado.get_is_superuser()
 
-        def filtrar_logs(e):
-            texto = campo_b.value.strip().lower()
-            usuario_filtro = drop_f.value
-            
-            col_logs.controls.clear()
-            for data_hora, usuario, acao in logs_recentes:
-                match_texto = texto in acao.lower() or texto in usuario.lower() or texto in data_hora.lower()
-                match_usuario = usuario_filtro == "Todos" or usuario_filtro == usuario
-                
-                if match_texto and match_usuario:
-                    col_logs.controls.append(
-                        ft.ListTile(
-                            leading=ft.Icon(ft.Icons.CIRCLE, size=8, color=VERDE_CLARO),
-                            title=ft.Text(acao, size=13, color=TEXTO_ESCURO),
-                            subtitle=ft.Text(f"{usuario} • {data_hora}", size=11, color=TEXTO_MEDIO),
-                            trailing=ft.IconButton(
-                                icon=ft.Icons.ZOOM_IN_ROUNDED, 
-                                icon_color=VERDE_MEDIO,
-                                on_click=lambda ev, d=data_hora, u=usuario, a=acao: mostrar_modal_detalhes(
-                                    "Detalhes do Log", {"Data/Hora": d, "Usuário": u, "Ação Realizada": a}
-                                )
-                            ),
-                            dense=True,
+        # Admin vê logs recentes; Funcionário vê serviços recentes
+        if is_admin:
+            logs_recentes = banco.listar_logs()[:5]
+            col_painel = ft.Column(spacing=0)
+
+            def filtrar_logs(e):
+                texto = campo_b.value.strip().lower()
+                usuario_filtro = drop_f.value
+                col_painel.controls.clear()
+                for data_hora, usuario, acao in logs_recentes:
+                    match_texto = texto in acao.lower() or texto in usuario.lower() or texto in data_hora.lower()
+                    match_usuario = usuario_filtro == "Todos" or usuario_filtro == usuario
+                    if match_texto and match_usuario:
+                        col_painel.controls.append(
+                            ft.ListTile(
+                                leading=ft.Icon(ft.Icons.CIRCLE, size=8, color=VERDE_CLARO),
+                                title=ft.Text(acao, size=13, color=TEXTO_ESCURO),
+                                subtitle=ft.Text(f"{usuario} • {data_hora}", size=11, color=TEXTO_MEDIO),
+                                trailing=ft.IconButton(
+                                    icon=ft.Icons.ZOOM_IN_ROUNDED,
+                                    icon_color=VERDE_MEDIO,
+                                    on_click=lambda ev, d=data_hora, u=usuario, a=acao: mostrar_modal_detalhes(
+                                        "Detalhes do Log", {"Data/Hora": d, "Usuário": u, "Ação Realizada": a}
+                                    )
+                                ),
+                                dense=True,
+                            )
                         )
-                    )
-            if not col_logs.controls:
-                col_logs.controls.append(ft.Text("Nenhuma atividade correspondente.", color=TEXTO_MEDIO, size=13))
-            page.update()
+                if not col_painel.controls:
+                    col_painel.controls.append(ft.Text("Nenhuma atividade correspondente.", color=TEXTO_MEDIO, size=13))
+                page.update()
 
-        # Extrai usuários únicos dos logs recentes para popular o filtro dinamicamente
-        usuarios_logs = list(set([l[1] for l in logs_recentes]))
-        barra_componente, campo_b, drop_f = criar_barra_busca_filtros("Buscar nas atividades recentes...", usuarios_logs, filtrar_logs)
+            usuarios_logs = list(set([l[1] for l in logs_recentes]))
+            barra_componente, campo_b, drop_f = criar_barra_busca_filtros("Buscar nas atividades recentes...", usuarios_logs, filtrar_logs)
+            filtrar_logs(None)
+            titulo_painel = "Atividade Recente"
+            icone_painel = ft.Icons.HISTORY_ROUNDED
 
-        # Dispara a renderização inicial dos logs
-        filtrar_logs(None)
+        else:
+            # Funcionário: mostra serviços recentes
+            servicos_recentes = Sistema.lista_servicos[-5:][::-1]
+            col_painel = ft.Column(spacing=0)
+
+            def filtrar_servicos(e):
+                texto = campo_b.value.strip().lower()
+                tipo_filtro = drop_f.value
+                col_painel.controls.clear()
+                for s in servicos_recentes:
+                    match_texto = texto in s.get_tipo().lower() or texto in str(s.get_id_animal()).lower()
+                    match_tipo = tipo_filtro == "Todos" or s.get_tipo() == tipo_filtro
+                    if match_texto and match_tipo:
+                        col_painel.controls.append(
+                            ft.ListTile(
+                                leading=ft.Icon(ft.Icons.PETS_ROUNDED, size=16, color=VERDE_CLARO),
+                                title=ft.Text(s.get_tipo(), size=13, color=TEXTO_ESCURO),
+                                subtitle=ft.Text(
+                                    f"Animal ID: {s.get_id_animal()} • R$ {s.get_preco():.2f} • {s.get_data_hora().strftime('%d/%m/%Y %H:%M')}",
+                                    size=11, color=TEXTO_MEDIO
+                                ),
+                                dense=True,
+                            )
+                        )
+                if not col_painel.controls:
+                    col_painel.controls.append(ft.Text("Nenhum serviço recente.", color=TEXTO_MEDIO, size=13))
+                page.update()
+
+            barra_componente, campo_b, drop_f = criar_barra_busca_filtros(
+                "Buscar por tipo ou animal...",
+                ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"],
+                filtrar_servicos
+            )
+            filtrar_servicos(None)
+            titulo_painel = "Serviços Recentes"
+            icone_painel = ft.Icons.MEDICAL_SERVICES_ROUNDED
 
         area_conteudo.controls += [
             ft.Text(f"Olá, {usuario_logado.get_nome()} 👋", size=24,
@@ -627,8 +667,8 @@ def tela_principal(page: ft.Page):
                     controls=[
                         ft.Row(
                             controls=[
-                                ft.Icon(ft.Icons.HISTORY_ROUNDED, color=VERDE_ESCURO),
-                                ft.Text("Atividade Recente", size=16,
+                                ft.Icon(icone_painel, color=VERDE_ESCURO),
+                                ft.Text(titulo_painel, size=16,
                                         weight=ft.FontWeight.BOLD, color=VERDE_ESCURO),
                             ],
                             spacing=8,
@@ -636,7 +676,7 @@ def tela_principal(page: ft.Page):
                         ft.Divider(height=16),
                         barra_componente,
                         ft.Container(height=10),
-                        col_logs,
+                        col_painel,
                     ],
                     spacing=0,
                 ),
@@ -657,7 +697,7 @@ def tela_principal(page: ft.Page):
 
         def abrir_cadastro(e, cliente=None):
             editando = cliente is not None
-            id_gerado = cliente.get_id() if editando else gerar_id("CLI_")
+            id_gerado = cliente.get_id() if editando else proximo_id("clientes")
             
             f_nome     = campo_texto("Nome completo", largura=280, valor=cliente.get_nome() if editando else "")
             f_email    = campo_texto("Email", largura=280, valor=cliente.get_email() if editando else "")
@@ -696,6 +736,7 @@ def tela_principal(page: ft.Page):
                 navegar("clientes")
 
             dialogo_ref[0] = ft.AlertDialog(
+                bgcolor=VERDE_CLARO,
                 title=ft.Text("Editar Cliente" if editando else "Novo Cliente",
                               color=BRANCO, weight=ft.FontWeight.BOLD),
                 content=ft.Column(
@@ -833,7 +874,7 @@ def tela_principal(page: ft.Page):
                 fechar_dialogo_global(page, dialogo_ref[0])
 
         def abrir_cadastro(e):
-            id_gerado   = gerar_id("ANI_")
+            id_gerado   = proximo_id("animais")
             f_nome      = campo_texto("Nome do animal", largura=280)
             f_idade     = campo_texto("Idade (anos)", largura=280)
             f_sexo      = dropdown_campo("Sexo", ["M", "F"], largura=280)
@@ -1139,7 +1180,7 @@ def tela_principal(page: ft.Page):
                 fechar_dialogo_global(page, dialogo_ref[0])
 
         def abrir_cadastro(e):
-            id_gerado = gerar_id("USR_")
+            id_gerado = proximo_id("usuarios")
             f_nome   = campo_texto("Nome", largura=280)
             f_email  = campo_texto("Email", largura=280)
             f_tel    = campo_texto("Telefone", largura=280)
@@ -1167,12 +1208,18 @@ def tela_principal(page: ft.Page):
                 navegar("usuarios")
 
             dialogo_ref[0] = ft.AlertDialog(
-                title=ft.Text("Novo Usuário", color=VERDE_ESCURO, weight=ft.FontWeight.BOLD),
-                content=ft.Column(
-                    controls=[f_nome, f_email, f_tel, f_cpf, f_senha, f_tipo, msg],
-                    spacing=12,
-                    width=300,
-                    scroll=ft.ScrollMode.AUTO,
+                title=ft.Text("Novo Usuário", color=BRANCO, weight=ft.FontWeight.BOLD),
+                bgcolor=VERDE_CLARO,
+                content=ft.Container(
+                    border_radius=12,
+                    border=ft.Border.all(1.5, VERDE_MEDIO),
+                    padding=12,
+                    content=ft.Column(
+                        controls=[f_nome, f_email, f_tel, f_cpf, f_senha, f_tipo, msg],
+                        spacing=8,
+                        width=300,
+                        scroll=ft.ScrollMode.ALWAYS,
+                    ),
                 ),
                 actions=[
                     botao_secundario("Cancelar", fechar_dialogo, largura=130),
@@ -1309,7 +1356,7 @@ def tela_principal(page: ft.Page):
                 fechar_dialogo_global(page, dialogo_ref[0])
 
         def abrir_cadastro(e):
-            id_gerado  = gerar_id("PRD_")
+            id_gerado  = proximo_id("estoque")
             f_nome     = campo_texto("Nome do produto", largura=280)
             f_cat      = dropdown_campo("Categoria",
                                         ["Ração", "Medicamento", "Higiene", "Acessório"], largura=280)
@@ -1335,16 +1382,22 @@ def tela_principal(page: ft.Page):
                     fechar_dialogo()
                     navegar("estoque")
                 except Exception as ex:
-                    msg.value = f"Erro: {ex} {ex.__traceback__.tb_lineno}"
+                    msg.value = f"Erro: {ex}"
                     page.update()
 
             dialogo_ref[0] = ft.AlertDialog(
                 title=ft.Text("Novo Produto", color=BRANCO, weight=ft.FontWeight.BOLD),
-                content=ft.Column(
-                    controls=[f_nome, f_cat, f_qtd, f_preco, f_min, msg],
-                    spacing=12,
-                    width=300,
-                    scroll=ft.ScrollMode.AUTO,
+                bgcolor=VERDE_CLARO,
+                content=ft.Container(
+                    border_radius=12,
+                    border=ft.Border.all(1.5, VERDE_MEDIO),
+                    padding=12,
+                    content=ft.Column(
+                        controls=[f_nome, f_cat, f_qtd, f_preco, f_min, msg],
+                        spacing=8,
+                        width=300,
+                        scroll=ft.ScrollMode.ALWAYS,
+                    ),
                 ),
                 actions=[
                     botao_secundario("Cancelar", fechar_dialogo, largura=130),
@@ -1455,7 +1508,7 @@ def tela_principal(page: ft.Page):
     # ════════════════════════════════════════════════════
 
     def renderizar_servicos():
-        from Classes.Subclasses.Servicos import Servico as ServicoClass
+        from Classes.Subclasses.Servicos.Servico import Servico 
 
         dialogo_ref = [None]
         col_listagem = ft.Column(spacing=10)
@@ -1465,7 +1518,7 @@ def tela_principal(page: ft.Page):
                 fechar_dialogo_global(page, dialogo_ref[0])
 
         def abrir_cadastro(e):
-            id_gerado     = gerar_id("SRV_")
+            id_gerado     = proximo_id("servicos")
             f_tipo       = dropdown_campo("Tipo", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"], largura=280)
             f_preco      = campo_texto("Preço base (R$)", largura=280)
             f_id_animal  = campo_texto("ID do animal", largura=280)
@@ -1477,7 +1530,7 @@ def tela_principal(page: ft.Page):
                     page.update()
                     return
                 try:
-                    serv = ServicoClass(id_gerado, f_tipo.value,
+                    serv = Servico(id_gerado, f_tipo.value,
                                        float(f_preco.value), f_id_animal.value,
                                        usuario_logado.get_id())
                     serv.registrar_servico()
@@ -1494,10 +1547,17 @@ def tela_principal(page: ft.Page):
 
             dialogo_ref[0] = ft.AlertDialog(
                 title=ft.Text("Novo Serviço", color=BRANCO, weight=ft.FontWeight.BOLD),
-                content=ft.Column(
-                    controls=[f_tipo, f_preco, f_id_animal, msg],
-                    spacing=12,
-                    width=300,
+                bgcolor=VERDE_CLARO,
+                content=ft.Container(
+                    border_radius=12,
+                    border=ft.Border.all(1.5, VERDE_MEDIO),
+                    padding=12,
+                    content=ft.Column(
+                        controls=[f_tipo, f_preco, f_id_animal, msg],
+                        spacing=8,
+                        width=300,
+                        scroll=ft.ScrollMode.ALWAYS,
+                    ),
                 ),
                 actions=[
                     botao_secundario("Cancelar", fechar_dialogo, largura=130),

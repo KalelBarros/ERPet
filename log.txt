@@ -141,3 +141,22 @@
 [2026-06-06 16:11:24] admin - Login no sistema
 [2026-06-06 16:18:09] admin - Login no sistema
 [2026-06-06 16:19:08] admin - Cadastro de produto: Saco de ração de cachorro
+[2026-06-06 16:57:39] admin - Login no sistema
+[2026-06-06 16:58:21] admin - Login no sistema
+[2026-06-06 17:00:39] admin - Cadastro de animal: Apolo (Canino)
+[2026-06-06 17:02:16] admin - Login no sistema
+[2026-06-06 17:02:29] admin - Serviço 'Banho' para animal ID 1
+[2026-06-06 17:04:47] admin - Login no sistema
+[2026-06-06 17:05:10] admin - Cadastro de produto: Ração de cachorro
+[2026-06-06 17:06:07] admin - Cadastro de usuário: Fulano (Funcionario)
+[2026-06-06 17:06:09] admin - Logout
+[2026-06-06 17:06:13] Fulano - Login no sistema
+[2026-06-06 17:11:19] admin - Login no sistema
+[2026-06-06 17:12:24] admin - Login no sistema
+[2026-06-06 17:15:39] admin - Login no sistema
+[2026-06-06 17:18:35] admin - Login no sistema
+[2026-06-06 17:20:07] admin - Login no sistema
+[2026-06-06 17:20:58] admin - Login no sistema
+[2026-06-06 17:22:04] admin - Login no sistema
+[2026-06-06 18:30:36] admin - Login no sistema
+[2026-06-06 18:53:41] admin - Login no sistema
