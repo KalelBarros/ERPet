@@ -135,3 +135,9 @@
 [2026-06-02 02:42:14] admin - Login no sistema
 [2026-06-02 02:45:32] admin - Login no sistema
 [2026-06-02 02:46:49] admin - Login no sistema
+[2026-06-06 15:56:39] admin - Login no sistema
+[2026-06-06 16:00:03] admin - Login no sistema
+[2026-06-06 16:09:30] admin - Login no sistema
+[2026-06-06 16:11:24] admin - Login no sistema
+[2026-06-06 16:18:09] admin - Login no sistema
+[2026-06-06 16:19:08] admin - Cadastro de produto: Saco de ração de cachorro

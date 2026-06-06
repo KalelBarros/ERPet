@@ -31,6 +31,8 @@ class Sistema:
         Sistema._carregar_usuarios()
         Sistema._carregar_clientes()
         Sistema._carregar_animais()
+        Sistema._carregar_estoque() 
+        Sistema._carregar_servicos()
 
     @staticmethod
     def _carregar_usuarios():
@@ -84,53 +86,109 @@ class Sistema:
                 continue
 
             Sistema.lista_animais.append(obj)
+            
+            
+    @staticmethod
+    def _carregar_estoque():
+        """Reconstrói os objetos da classe Estoque a partir do banco de dados erpet.db."""
+        from Classes.Subclasses.Servicos.Estoque import Estoque # Ajustar se necessário
+        
+        Sistema.lista_estoque.clear()
+        for row in banco.listar_estoque():
+            # Estrutura no banco.py: id, nome, categoria, quantidade, preco_unitario, qtd_minima
+            id_prod, nome, categoria, quantidade, preco_unitario, qtd_minima = row
+            
+            obj = Estoque(
+                id=id_prod,
+                nome=nome,
+                categoria=categoria,
+                quantidade=int(quantidade),
+                preco_unitario=float(preco_unitario),
+                qtd_minima=int(qtd_minima)
+            )
+            Sistema.lista_estoque.append(obj)
+        print(f"✔ {len(Sistema.lista_estoque)} produtos carregados na memória.")
+
+    @staticmethod
+    def _carregar_servicos():
+        """Reconstrói os objetos da classe Servico a partir do banco de dados."""
+        from Classes.Subclasses.Servicos.Servico import Servico # Ajustar se necessário
+        from datetime import datetime
+        
+        Sistema.lista_servicos.clear()
+        for row in banco.listar_servicos():
+            # Estrutura no banco.py: id, tipo, preco, data_hora, id_animal, id_funcionario
+            id_serv, tipo, preco, data_hora_str, id_animal, id_funcionario = row
+            
+            obj = Servico(
+                id=id_serv,
+                tipo=tipo,
+                preco=float(preco),
+                id_animal=id_animal,
+                id_funcionario=id_funcionario
+            )
+            
+            # Reconstrói o atributo de data e hora salvo como texto no SQLite
+            try:
+                obj._Servico__data_hora = datetime.strptime(data_hora_str, "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                pass # Caso a data esteja em outro formato, mantém o datetime.now() padrão do init
+                
+            Sistema.lista_servicos.append(obj)
+        print(f"✔ {len(Sistema.lista_servicos)} serviços carregados na memória.")
 
     # ═══════════════════════════════════════════════
-    # CADASTRAR
+    # CADASTRAR — VERSÃO COMPLETA E CORRIGIDA
     # ═══════════════════════════════════════════════
 
     @staticmethod
     def Cadastrar(objeto, usuario_logado=None):
         """Salva o objeto na memória e no banco, e registra o log de forma segura."""
         from Classes.Subclasses.Servicos.Servico import Servico
+        from Classes.Subclasses.Servicos.Estoque import Estoque
+        # Se você tiver uma classe Produto, mude o import abaixo para o caminho correto do seu projeto:
+        # from Classes.Subclasses.Estoque.Produto import Produto 
 
-        # Define qual usuário usar para o Log (usa o passado por parâmetro ou o global do Main)
         usuario_acao = usuario_logado or Main.usuario_logado
 
         if isinstance(objeto, Cliente):
             Sistema.lista_clientes.append(objeto)
             banco.inserir_cliente(objeto)
             if usuario_acao:
-                banco.inserir_log(
-                    usuario_acao.get_nome(),
-                    f"Cadastro de cliente: {objeto.get_nome()}"
-                )
+                banco.inserir_log(usuario_acao.get_nome(), f"Cadastro de cliente: {objeto.get_nome()}")
             print(f"✔ Cliente '{objeto.get_nome()}' cadastrado com sucesso!")
 
         elif isinstance(objeto, Usuario):
             Sistema.lista_usuarios.append(objeto)
             banco.inserir_usuario(objeto)
             if usuario_acao:
-                banco.inserir_log(
-                    usuario_acao.get_nome(),
-                    f"Cadastro de usuário: {objeto.get_nome()} ({type(objeto).__name__})"
-                )
+                banco.inserir_log(usuario_acao.get_nome(), f"Cadastro de usuário: {objeto.get_nome()} ({type(objeto).__name__})")
             print(f"✔ Usuário '{objeto.get_nome()}' ({type(objeto).__name__}) cadastrado!")
 
         elif isinstance(objeto, Animal):
             Sistema.lista_animais.append(objeto)
             banco.inserir_animal(objeto)
             if usuario_acao:
-                banco.inserir_log(
-                    usuario_acao.get_nome(),
-                    f"Cadastro de animal: {objeto.get_nome()} ({type(objeto).__name__})"
-                )
+                banco.inserir_log(usuario_acao.get_nome(), f"Cadastro de animal: {objeto.get_nome()} ({type(objeto).__name__})")
             print(f"✔ Animal '{objeto.get_nome()}' cadastrado com sucesso!")
 
+        # ─── CORREÇÃO: ADICIONADO SUPORTE A SERVIÇO NO BANCO ───
         elif isinstance(objeto, Servico):
             Sistema.lista_servicos.append(objeto)
-            print(f"Serviço '{objeto.get_tipo()}' registrado com sucesso!")
+            banco.inserir_servico(objeto) # Chama a função do banco.py que salva o serviço e produtos usados
+            if usuario_acao:
+                banco.inserir_log(usuario_acao.get_nome(), f"Registrou serviço: {objeto.get_tipo()} para o Animal ID {objeto.get_id_animal()}")
+            print(f"✔ Serviço '{objeto.get_tipo()}' registrado com sucesso!")
             
+        # ─── CORREÇÃO: ADICIONADO SUPORTE A PRODUTO/ESTOQUE NO BANCO ───
+        # ─── SUPORTE A PRODUTO/ESTOQUE NO BANCO ───
+        elif isinstance(objeto, Estoque):
+            Sistema.lista_estoque.append(objeto)
+            banco.inserir_estoque(objeto)
+            if usuario_acao:
+                banco.inserir_log(usuario_acao.get_nome(), f"Cadastrou produto no estoque: {objeto.get_nome()}")
+            print(f"✔ Produto '{objeto.get_nome()}' adicionado ao estoque com sucesso!")
+
         else:
             print("Erro: Tipo de objeto desconhecido.")
 

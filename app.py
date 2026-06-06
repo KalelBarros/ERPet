@@ -1299,7 +1299,7 @@ def tela_principal(page: ft.Page):
     # ════════════════════════════════════════════════════
 
     def renderizar_estoque():
-        from Classes.Subclasses.Servicos import Estoque as EstoqueClass
+        from Classes.Subclasses.Servicos.Estoque import Estoque
 
         dialogo_ref = [None]
         col_listagem = ft.Column(spacing=10)
@@ -1324,7 +1324,7 @@ def tela_principal(page: ft.Page):
                     page.update()
                     return
                 try:
-                    prod = EstoqueClass(id_gerado, f_nome.value, f_cat.value or "Geral",
+                    prod = Estoque(id_gerado, f_nome.value, f_cat.value or "Geral",
                                        int(f_qtd.value), float(f_preco.value),
                                        int(f_min.value or 0))
                     Sistema.lista_estoque.append(prod)
@@ -1335,7 +1335,7 @@ def tela_principal(page: ft.Page):
                     fechar_dialogo()
                     navegar("estoque")
                 except Exception as ex:
-                    msg.value = f"Erro: {ex}"
+                    msg.value = f"Erro: {ex} {ex.__traceback__.tb_lineno}"
                     page.update()
 
             dialogo_ref[0] = ft.AlertDialog(

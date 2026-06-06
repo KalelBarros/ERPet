@@ -357,7 +357,7 @@ def excluir_animal(id_animal):
 # ═══════════════════════════════════════════════════════════════════════
 
 def inserir_estoque(produto):
-    """Salva um item de Estoque no banco."""
+    """Insere um novo item de estoque no banco."""
     conn = conectar()
     cursor = conn.cursor()
     try:
@@ -365,8 +365,12 @@ def inserir_estoque(produto):
             INSERT INTO estoque (id, nome, categoria, quantidade, preco_unitario, qtd_minima)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            produto.get_id(), produto.get_nome(), produto.get_categoria(),
-            produto.get_quantidade(), produto.get_preco_unitario(), produto.get_qtd_minima()
+            produto.get_id(),
+            produto.get_nome(),
+            produto.get_categoria(),
+            produto.get_quantidade(),
+            produto.get_preco_unitario(),
+            produto.get_qtd_minima()
         ))
         conn.commit()
     except sqlite3.IntegrityError:
