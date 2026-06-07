@@ -61,6 +61,23 @@ def proximo_id(tabela):
         return "1"
     finally:
         conn.close()
+
+# ═══════════════════════════════════════════════════════════
+# UTILITÁRIOS — Validação de existência de entidades
+# ═══════════════════════════════════════════════════════════
+
+def cliente_existe(id_cliente):
+    """Verifica se um cliente com o ID fornecido existe."""
+    return any(c.get_id() == id_cliente for c in Sistema.lista_clientes)
+
+def funcionario_existe(id_funcionario):
+    """Verifica se um funcionário/usuário com o ID fornecido existe."""
+    return any(u.get_id() == id_funcionario for u in Sistema.lista_usuarios)
+
+def animal_existe(id_animal):
+    """Verifica se um animal com o ID fornecido existe."""
+    return any(a.get_id() == id_animal for a in Sistema.lista_animais)
+
 # ═══════════════════════════════════════════════════════════
 # COMPONENTES REUTILIZÁVEIS
 # ═══════════════════════════════════════════════════════════
@@ -475,7 +492,7 @@ def tela_principal(page: ft.Page):
     )
 
     # ════════════════════════════════════════════════════
-    # COMPONENTE DE BUSCA E FILTRO GENÉRICO (CORRIGIDO)
+    # COMPONENTE DE BUSCA E FILTRO GENÉRICO
     # ════════════════════════════════════════════════════
     def criar_barra_busca_filtros(hint_busca, opcoes_filtro, on_change_callback):
         campo_busca = ft.TextField(
@@ -486,7 +503,7 @@ def tela_principal(page: ft.Page):
             border_radius=10,
             border_color=VERDE_MEDIO,
             bgcolor=BRANCO,
-            text_style=ft.TextStyle(color=TEXTO_ESCURO, size=14), # O peso (weight) se necessário vai aqui dentro
+            text_style=ft.TextStyle(color=TEXTO_ESCURO, size=14),
             on_change=on_change_callback
         )
         
@@ -524,7 +541,7 @@ def tela_principal(page: ft.Page):
             linhas_detalhes.append(ft.Divider(color=ft.Colors.with_opacity(0.1, TEXTO_MEDIO), height=8))
         
         if linhas_detalhes:
-            linhas_detalhes.pop() # Remove o último divisor desnecessário
+            linhas_detalhes.pop()
 
         def fechar(e):
             fechar_dialogo_global(page, dialogo_ref[0])
@@ -572,7 +589,6 @@ def tela_principal(page: ft.Page):
 
         is_admin = usuario_logado.get_is_superuser()
 
-        # Admin vê logs recentes; Funcionário vê serviços recentes
         if is_admin:
             logs_recentes = banco.listar_logs()[:5]
             col_painel = ft.Column(spacing=0)
@@ -611,8 +627,10 @@ def tela_principal(page: ft.Page):
             icone_painel = ft.Icons.HISTORY_ROUNDED
 
         else:
-            # Funcionário: mostra serviços recentes
-            servicos_recentes = Sistema.lista_servicos[-5:][::-1]
+            # Funcionário: mostra APENAS os serviços atribuídos a ele
+            meu_id = usuario_logado.get_id()
+            meus_servicos = [s for s in Sistema.lista_servicos if s.get_id_funcionario() == meu_id]
+            servicos_recentes = meus_servicos[-5:][::-1]
             col_painel = ft.Column(spacing=0)
 
             def filtrar_servicos(e):
@@ -635,7 +653,7 @@ def tela_principal(page: ft.Page):
                             )
                         )
                 if not col_painel.controls:
-                    col_painel.controls.append(ft.Text("Nenhum serviço recente.", color=TEXTO_MEDIO, size=13))
+                    col_painel.controls.append(ft.Text("Nenhum serviço atribuído a você recentemente.", color=TEXTO_MEDIO, size=13))
                 page.update()
 
             barra_componente, campo_b, drop_f = criar_barra_busca_filtros(
@@ -644,7 +662,7 @@ def tela_principal(page: ft.Page):
                 filtrar_servicos
             )
             filtrar_servicos(None)
-            titulo_painel = "Serviços Recentes"
+            titulo_painel = "Meus Serviços Recentes"
             icone_painel = ft.Icons.MEDICAL_SERVICES_ROUNDED
 
         area_conteudo.controls += [
@@ -724,12 +742,12 @@ def tela_principal(page: ft.Page):
                     for setter, valor in mapa.items():
                         if valor:
                             Sistema.Editar(Sistema.lista_clientes, id_gerado,
-                                           setter, valor)
+                                           setter, valor, usuario_logado)
                     snack(page, f"Cliente '{f_nome.value}' atualizado!")
                 else:
                     cli = Cliente(id_gerado, f_nome.value, f_email.value,
                                   f_telefone.value, f_cpf.value, f_endereco.value)
-                    Sistema.Cadastrar(cli)
+                    Sistema.Cadastrar(cli, usuario_logado)
                     snack(page, f"Cliente '{f_nome.value}' cadastrado!")
 
                 fechar_dialogo()
@@ -842,7 +860,6 @@ def tela_principal(page: ft.Page):
                 col_listagem.controls.append(ft.Text("Nenhum cliente correspondente encontrado.", color=TEXTO_MEDIO))
             page.update()
 
-        # Filtro por domínios comuns de e-mail cadastrados para Clientes
         barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por nome, CPF ou e-mail...", ["@gmail.com", "@outlook.com", "@hotmail.com"], executar_busca_filtro)
         executar_busca_filtro(None)
 
@@ -873,8 +890,71 @@ def tela_principal(page: ft.Page):
             if dialogo_ref[0]:
                 fechar_dialogo_global(page, dialogo_ref[0])
 
-        def abrir_cadastro(e):
-            id_gerado   = proximo_id("animais")
+        def abrir_cadastro(e, animal=None):
+            editando = animal is not None
+            id_gerado = animal.get_id() if editando else proximo_id("animais")
+
+            if editando:
+                # Formulário de edição (campos editáveis do animal)
+                f_nome      = campo_texto("Nome do animal", largura=280, valor=animal.get_nome())
+                f_idade     = campo_texto("Idade (anos)", largura=280, valor=str(animal.get_idade()))
+                f_raca      = campo_texto("Raça", largura=280, valor=animal.get_raca())
+                f_peso      = campo_texto("Peso (kg)", largura=280, valor=str(animal.get_peso()))
+                f_cor       = campo_texto("Cor", largura=280, valor=animal.get_cor())
+                f_historico = campo_texto("Histórico", largura=280, valor=animal.get_historico())
+                msg = ft.Text("", color=ERRO, size=12)
+
+                def salvar_edicao(e):
+                    if not f_nome.value or not f_idade.value:
+                        msg.value = "Nome e Idade são obrigatórios."
+                        page.update()
+                        return
+                    try:
+                        campos_edicao = {
+                            "set_nome": f_nome.value,
+                            "set_raca": f_raca.value,
+                            "set_cor": f_cor.value,
+                            "set_historico": f_historico.value,
+                        }
+                        for setter, valor in campos_edicao.items():
+                            if valor:
+                                Sistema.Editar(Sistema.lista_animais, id_gerado, setter, valor, usuario_logado)
+                        if f_peso.value:
+                            Sistema.Editar(Sistema.lista_animais, id_gerado, "set_peso", float(f_peso.value), usuario_logado)
+                        if f_idade.value:
+                            Sistema.Editar(Sistema.lista_animais, id_gerado, "set_idade", int(f_idade.value), usuario_logado)
+                        snack(page, f"Animal '{f_nome.value}' atualizado!")
+                        fechar_dialogo()
+                        navegar("animais")
+                    except Exception as ex:
+                        msg.value = f"Erro: {ex}"
+                        page.update()
+
+                dialogo_ref[0] = ft.AlertDialog(
+                    title=ft.Text("Editar Animal", color=BRANCO, weight=ft.FontWeight.BOLD),
+                    bgcolor=VERDE_CLARO,
+                    content=ft.Container(
+                        border_radius=12,
+                        border=ft.Border.all(1.5, VERDE_MEDIO),
+                        padding=12,
+                        content=ft.Column(
+                            controls=[f_nome, f_idade, f_raca, f_peso, f_cor, f_historico, msg],
+                            spacing=5,
+                            width=300,
+                            height=380,
+                            scroll=ft.ScrollMode.ALWAYS,
+                        )
+                    ),
+                    actions=[
+                        botao_secundario("Cancelar", fechar_dialogo, largura=130),
+                        botao_primario("Salvar", salvar_edicao, largura=130),
+                    ],
+                    actions_alignment=ft.MainAxisAlignment.CENTER,
+                )
+                exibir_dialogo(page, dialogo_ref[0])
+                return
+
+            # Formulário de cadastro novo
             f_nome      = campo_texto("Nome do animal", largura=280)
             f_idade     = campo_texto("Idade (anos)", largura=280)
             f_sexo      = dropdown_campo("Sexo", ["M", "F"], largura=280)
@@ -951,6 +1031,7 @@ def tela_principal(page: ft.Page):
                 tipo = obtener_valor(f_tipo)
                 val_nome = obtener_valor(f_nome)
                 val_idade = obtener_valor(f_idade)
+                val_id_dono = obtener_valor(f_id_dono)
 
                 if not val_nome or not val_idade:
                     msg.value = "Nome e Idade são obrigatórios."
@@ -962,38 +1043,47 @@ def tela_principal(page: ft.Page):
                     dialogo_ref[0].update()
                     return
 
+                # ── Validação: o dono deve existir ──────────────────
+                if not val_id_dono:
+                    msg.value = "Informe o ID do dono."
+                    dialogo_ref[0].update()
+                    return
+                if not cliente_existe(val_id_dono):
+                    msg.value = f"❌ Dono com ID '{val_id_dono}' não encontrado. Cadastre o cliente primeiro."
+                    dialogo_ref[0].update()
+                    return
+
                 val_sexo      = obtener_valor(f_sexo) or "M"
                 val_raca      = obtener_valor(f_raca)
                 val_peso      = obtener_valor(f_peso)
                 val_cor       = obtener_valor(f_cor)
                 val_historico = obtener_valor(f_historico)
-                val_id_dono   = obtener_valor(f_id_dono)
                 
                 extras = [obtener_valor(c) for c in col_extras.controls]
 
                 try:
                     if tipo == "Canino":
-                        animal = Canino(id_gerado, val_nome, int(val_idade),
+                        animal_obj = Canino(id_gerado, val_nome, int(val_idade),
                                         val_sexo, val_raca, float(val_peso or 0),
                                         val_cor, val_historico, val_id_dono,
                                         extras[0], extras[1], extras[2], extras[3])
                     elif tipo == "Felino":
-                        animal = Felino(id_gerado, val_nome, int(val_idade),
+                        animal_obj = Felino(id_gerado, val_nome, int(val_idade),
                                         val_sexo, val_raca, float(val_peso or 0),
                                         val_cor, val_historico, val_id_dono,
                                         extras[0], extras[1])
                     elif tipo == "Ave":
-                        animal = Ave(id_gerado, val_nome, int(val_idade),
+                        animal_obj = Ave(id_gerado, val_nome, int(val_idade),
                                      val_sexo, val_raca, float(val_peso or 0),
                                      val_cor, val_historico, val_id_dono,
                                      extras[0], extras[1])
                     elif tipo == "Roedor":
-                        animal = Roedor(id_gerado, val_nome, int(val_idade),
+                        animal_obj = Roedor(id_gerado, val_nome, int(val_idade),
                                         val_sexo, val_raca, float(val_peso or 0),
                                         val_cor, val_historico, val_id_dono,
                                         extras[0], extras[1])
 
-                    Sistema.Cadastrar(animal, usuario_logado)
+                    Sistema.Cadastrar(animal_obj, usuario_logado)
                     snack(page, f"Animal '{val_nome}' cadastrado!")
                     fechar_dialogo()
                     navegar("animais")
@@ -1065,7 +1155,6 @@ def tela_principal(page: ft.Page):
                 "Histórico Clínico": a.get_historico(),
                 "ID do Dono": a.get_id_dono()
             }
-            # Adiciona propriedades específicas baseadas em herança estrutural
             if isinstance(a, Canino):
                 dados.update({"Porte": a.get_porte(), "Vacinado": a.get_is_vacinado(), "Castrado": a.get_is_castrado(), "Tipo de Pelo": a.get_tipo_pelo()})
             elif isinstance(a, Felino):
@@ -1110,6 +1199,9 @@ def tela_principal(page: ft.Page):
                                       tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
                                           f"Ficha de {a.get_nome()}", obter_detalhes_completos_animal(a)
                                       )),
+                        ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_color=VERDE_MEDIO,
+                                      tooltip="Editar",
+                                      on_click=lambda e, an=a: abrir_cadastro(e, an)),
                         ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
                                       tooltip="Remover",
                                       on_click=lambda e, an=a: confirmar_excluir(e, an)),
@@ -1142,7 +1234,6 @@ def tela_principal(page: ft.Page):
                 col_listagem.controls.append(ft.Text("Nenhum animal correspondente encontrado.", color=TEXTO_MEDIO))
             page.update()
 
-        # Filtro por sub-classe taxonômica do animal
         barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por nome do pet, raça ou ID do dono...", ["Canino", "Felino", "Ave", "Roedor"], executar_busca_filtro)
         executar_busca_filtro(None)
 
@@ -1179,43 +1270,71 @@ def tela_principal(page: ft.Page):
             if dialogo_ref[0]:
                 fechar_dialogo_global(page, dialogo_ref[0])
 
-        def abrir_cadastro(e):
-            id_gerado = proximo_id("usuarios")
-            f_nome   = campo_texto("Nome", largura=280)
-            f_email  = campo_texto("Email", largura=280)
-            f_tel    = campo_texto("Telefone", largura=280)
-            f_cpf    = campo_texto("CPF", largura=280)
+        def abrir_cadastro(e, usuario_alvo=None):
+            editando = usuario_alvo is not None
+            id_gerado = usuario_alvo.get_id() if editando else proximo_id("usuarios")
+
+            f_nome   = campo_texto("Nome", largura=280, valor=usuario_alvo.get_nome() if editando else "")
+            f_email  = campo_texto("Email", largura=280, valor=usuario_alvo.get_email() if editando else "")
+            f_tel    = campo_texto("Telefone", largura=280, valor=usuario_alvo.get_telefone() if editando else "")
+            f_cpf    = campo_texto("CPF", largura=280, valor=usuario_alvo.get_cpf() if editando else "")
             f_senha  = campo_texto("Senha", largura=280, senha=True)
-            f_tipo   = dropdown_campo("Perfil", ["Funcionário", "Administrador"], largura=280)
-            msg      = ft.Text("", color=ERRO, size=12)
+            
+            controles = [f_nome, f_email, f_tel, f_cpf, f_senha]
+
+            if not editando:
+                f_tipo = dropdown_campo("Perfil", ["Funcionário", "Administrador"], largura=280)
+                controles.append(f_tipo)
+
+            msg = ft.Text("", color=ERRO, size=12)
+            controles.append(msg)
 
             def salvar(e):
-                if not all([f_nome.value, f_senha.value, f_tipo.value]):
-                    msg.value = "Preencha todos os campos obrigatórios."
+                if not f_nome.value:
+                    msg.value = "O nome é obrigatório."
                     page.update()
                     return
 
-                if f_tipo.value == "Administrador":
-                    novo = Administrador(id_gerado, f_nome.value, f_email.value,
-                                        f_tel.value, f_cpf.value, f_senha.value)
+                if editando:
+                    campos_edicao = {
+                        "set_nome": f_nome.value,
+                        "set_email": f_email.value,
+                        "set_telefone": f_tel.value,
+                        "cpf": f_cpf.value,
+                    }
+                    for setter, valor in campos_edicao.items():
+                        if valor:
+                            Sistema.Editar(Sistema.lista_usuarios, id_gerado, setter, valor, usuario_logado)
+                    if f_senha.value:
+                        Sistema.Editar(Sistema.lista_usuarios, id_gerado, "set_senha", f_senha.value, usuario_logado)
+                    snack(page, f"Usuário '{f_nome.value}' atualizado!")
                 else:
-                    novo = Funcionario(id_gerado, f_nome.value, f_email.value,
-                                       f_tel.value, f_cpf.value, f_senha.value)
+                    if not f_senha.value or not f_tipo.value:
+                        msg.value = "Preencha todos os campos obrigatórios."
+                        page.update()
+                        return
+                    if f_tipo.value == "Administrador":
+                        novo = Administrador(id_gerado, f_nome.value, f_email.value,
+                                            f_tel.value, f_cpf.value, f_senha.value)
+                    else:
+                        novo = Funcionario(id_gerado, f_nome.value, f_email.value,
+                                           f_tel.value, f_cpf.value, f_senha.value)
+                    Sistema.Cadastrar(novo, usuario_logado)
+                    snack(page, f"Usuário '{f_nome.value}' cadastrado!")
 
-                Sistema.Cadastrar(novo, usuario_logado)
-                snack(page, f"Usuário '{f_nome.value}' cadastrado!")
                 fechar_dialogo()
                 navegar("usuarios")
 
             dialogo_ref[0] = ft.AlertDialog(
-                title=ft.Text("Novo Usuário", color=BRANCO, weight=ft.FontWeight.BOLD),
+                title=ft.Text("Editar Usuário" if editando else "Novo Usuário",
+                              color=BRANCO, weight=ft.FontWeight.BOLD),
                 bgcolor=VERDE_CLARO,
                 content=ft.Container(
                     border_radius=12,
                     border=ft.Border.all(1.5, VERDE_MEDIO),
                     padding=12,
                     content=ft.Column(
-                        controls=[f_nome, f_email, f_tel, f_cpf, f_senha, f_tipo, msg],
+                        controls=controles,
                         spacing=8,
                         width=300,
                         scroll=ft.ScrollMode.ALWAYS,
@@ -1229,16 +1348,21 @@ def tela_principal(page: ft.Page):
             )
             exibir_dialogo(page, dialogo_ref[0])
 
-        def confirmar_excluir(e, usuario):
+        def confirmar_excluir(e, usuario_alvo):
+            # ── Regra: admin não pode remover a si mesmo ────────────
+            if usuario_alvo.get_id() == usuario_logado.get_id():
+                snack(page, "⚠️ Você não pode remover o seu próprio usuário. Use 'Editar' para alterá-lo.", erro=True)
+                return
+
             def excluir(ev):
-                Sistema.Excluir(Sistema.lista_usuarios, usuario.get_id(), usuario_logado)
-                snack(page, f"Usuário '{usuario.get_nome()}' removido.")
+                Sistema.Excluir(Sistema.lista_usuarios, usuario_alvo.get_id(), usuario_logado)
+                snack(page, f"Usuário '{usuario_alvo.get_nome()}' removido.")
                 fechar_dialogo()
                 navegar("usuarios")
 
             dialogo_ref[0] = ft.AlertDialog(
                 title=ft.Text("Confirmar exclusão", color=ERRO),
-                content=ft.Text(f"Remover '{usuario.get_nome()}'?"),
+                content=ft.Text(f"Remover '{usuario_alvo.get_nome()}'?"),
                 actions=[
                     botao_secundario("Cancelar", fechar_dialogo, largura=130),
                     botao_perigo("Remover", excluir, largura=130),
@@ -1249,6 +1373,7 @@ def tela_principal(page: ft.Page):
 
         def linha_usuario(u):
             is_adm = u.get_is_superuser()
+            eh_eu = u.get_id() == usuario_logado.get_id()
             return ft.Container(
                 content=ft.Row(
                     controls=[
@@ -1260,8 +1385,20 @@ def tela_principal(page: ft.Page):
                         ),
                         ft.Column(
                             controls=[
-                                ft.Text(u.get_nome(), size=15,
-                                        weight=ft.FontWeight.W_600, color=TEXTO_ESCURO),
+                                ft.Row(
+                                    controls=[
+                                        ft.Text(u.get_nome(), size=15,
+                                                weight=ft.FontWeight.W_600, color=TEXTO_ESCURO),
+                                        ft.Container(
+                                            content=ft.Text("você", size=10, color=BRANCO, weight=ft.FontWeight.BOLD),
+                                            bgcolor=LARANJA,
+                                            padding=ft.Padding.symmetric(horizontal=6, vertical=2),
+                                            border_radius=10,
+                                            visible=eh_eu,
+                                        ),
+                                    ],
+                                    spacing=6,
+                                ),
                                 ft.Text(f"Email: {u.get_email()} • CPF: {u.get_cpf()}",
                                         size=12, color=TEXTO_MEDIO),
                             ],
@@ -1286,14 +1423,22 @@ def tela_principal(page: ft.Page):
                                               "Cargo de Acesso": "Administrador / Superuser" if is_adm else "Funcionário Operacional"
                                           }
                                       )),
-                        ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
-                                      tooltip="Remover",
-                                      on_click=lambda e, us=u: confirmar_excluir(e, us)),
+                        ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_color=VERDE_MEDIO,
+                                      tooltip="Editar",
+                                      on_click=lambda e, us=u: abrir_cadastro(e, us)),
+                        # Botão de remover — desabilitado visualmente se for o próprio admin
+                        ft.IconButton(
+                            ft.Icons.DELETE_ROUNDED,
+                            icon_color=ft.Colors.with_opacity(0.3, ERRO) if eh_eu else ERRO,
+                            tooltip="Não é possível remover seu próprio usuário" if eh_eu else "Remover",
+                            on_click=(lambda e: snack(page, "⚠️ Você não pode remover o seu próprio usuário.", erro=True)) if eh_eu
+                                     else (lambda e, us=u: confirmar_excluir(e, us)),
+                        ),
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
-                bgcolor=BRANCO,
+                bgcolor=ft.Colors.with_opacity(0.05, LARANJA) if eh_eu else BRANCO,
                 border_radius=12,
                 padding=ft.Padding.symmetric(horizontal=16, vertical=12),
                 shadow=ft.BoxShadow(blur_radius=6,
@@ -1322,7 +1467,6 @@ def tela_principal(page: ft.Page):
                 col_listagem.controls.append(ft.Text("Nenhum usuário correspondente encontrado.", color=TEXTO_MEDIO))
             page.update()
 
-        # Filtro estruturado por privilégio de nível de usuário
         barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por nome, e-mail ou CPF...", ["Administrador", "Funcionário"], executar_busca_filtro)
         executar_busca_filtro(None)
 
@@ -1355,14 +1499,17 @@ def tela_principal(page: ft.Page):
             if dialogo_ref[0]:
                 fechar_dialogo_global(page, dialogo_ref[0])
 
-        def abrir_cadastro(e):
-            id_gerado  = proximo_id("estoque")
-            f_nome     = campo_texto("Nome do produto", largura=280)
+        def abrir_cadastro(e, produto=None):
+            editando = produto is not None
+            id_gerado = produto.get_id() if editando else proximo_id("estoque")
+
+            f_nome     = campo_texto("Nome do produto", largura=280, valor=produto.get_nome() if editando else "")
             f_cat      = dropdown_campo("Categoria",
-                                        ["Ração", "Medicamento", "Higiene", "Acessório"], largura=280)
-            f_qtd      = campo_texto("Quantidade", largura=280)
-            f_preco    = campo_texto("Preço unitário (R$)", largura=280)
-            f_min      = campo_texto("Quantidade mínima", largura=280)
+                                        ["Ração", "Medicamento", "Higiene", "Acessório"], largura=280,
+                                        valor=produto.get_categoria() if editando else None)
+            f_qtd      = campo_texto("Quantidade", largura=280, valor=str(produto.get_quantidade()) if editando else "")
+            f_preco    = campo_texto("Preço unitário (R$)", largura=280, valor=str(produto.get_preco_unitario()) if editando else "")
+            f_min      = campo_texto("Quantidade mínima", largura=280, valor=str(produto.get_qtd_minima()) if editando else "")
             msg        = ft.Text("", color=ERRO, size=12)
 
             def salvar(e):
@@ -1371,14 +1518,34 @@ def tela_principal(page: ft.Page):
                     page.update()
                     return
                 try:
-                    prod = Estoque(id_gerado, f_nome.value, f_cat.value or "Geral",
-                                       int(f_qtd.value), float(f_preco.value),
-                                       int(f_min.value or 0))
-                    Sistema.lista_estoque.append(prod)
-                    banco.inserir_estoque(prod)
-                    banco.inserir_log(usuario_logado.get_nome(),
-                                      f"Cadastro de produto: {f_nome.value}")
-                    snack(page, f"Produto '{f_nome.value}' cadastrado!")
+                    if editando:
+                        conn = banco.conectar()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE estoque SET nome=?, categoria=?, quantidade=?, preco_unitario=?, qtd_minima=? WHERE id=?",
+                            (f_nome.value, f_cat.value or produto.get_categoria(),
+                             int(f_qtd.value), float(f_preco.value), int(f_min.value or 0), id_gerado)
+                        )
+                        conn.commit()
+                        conn.close()
+                        # Atualiza em memória
+                        prod_mem = next((p for p in Sistema.lista_estoque if p.get_id() == id_gerado), None)
+                        if prod_mem:
+                            Sistema.lista_estoque.remove(prod_mem)
+                        prod_novo = Estoque(id_gerado, f_nome.value, f_cat.value or produto.get_categoria(),
+                                            int(f_qtd.value), float(f_preco.value), int(f_min.value or 0))
+                        Sistema.lista_estoque.append(prod_novo)
+                        banco.inserir_log(usuario_logado.get_nome(), f"Edição de produto: {f_nome.value}")
+                        snack(page, f"Produto '{f_nome.value}' atualizado!")
+                    else:
+                        prod = Estoque(id_gerado, f_nome.value, f_cat.value or "Geral",
+                                           int(f_qtd.value), float(f_preco.value),
+                                           int(f_min.value or 0))
+                        Sistema.lista_estoque.append(prod)
+                        banco.inserir_estoque(prod)
+                        banco.inserir_log(usuario_logado.get_nome(),
+                                          f"Cadastro de produto: {f_nome.value}")
+                        snack(page, f"Produto '{f_nome.value}' cadastrado!")
                     fechar_dialogo()
                     navegar("estoque")
                 except Exception as ex:
@@ -1386,7 +1553,8 @@ def tela_principal(page: ft.Page):
                     page.update()
 
             dialogo_ref[0] = ft.AlertDialog(
-                title=ft.Text("Novo Produto", color=BRANCO, weight=ft.FontWeight.BOLD),
+                title=ft.Text("Editar Produto" if editando else "Novo Produto",
+                              color=BRANCO, weight=ft.FontWeight.BOLD),
                 bgcolor=VERDE_CLARO,
                 content=ft.Container(
                     border_radius=12,
@@ -1402,6 +1570,30 @@ def tela_principal(page: ft.Page):
                 actions=[
                     botao_secundario("Cancelar", fechar_dialogo, largura=130),
                     botao_primario("Salvar", salvar, largura=130),
+                ],
+                actions_alignment=ft.MainAxisAlignment.CENTER,
+            )
+            exibir_dialogo(page, dialogo_ref[0])
+
+        def confirmar_excluir_estoque(e, produto):
+            if not usuario_logado.get_is_superuser():
+                snack(page, "Apenas administradores podem remover.", erro=True)
+                return
+
+            def excluir(ev):
+                Sistema.lista_estoque.remove(produto)
+                banco.excluir_estoque(produto.get_id())
+                banco.inserir_log(usuario_logado.get_nome(), f"Remoção de produto: {produto.get_nome()}")
+                snack(page, f"Produto '{produto.get_nome()}' removido.")
+                fechar_dialogo()
+                navegar("estoque")
+
+            dialogo_ref[0] = ft.AlertDialog(
+                title=ft.Text("Confirmar exclusão", color=ERRO),
+                content=ft.Text(f"Deseja remover o produto '{produto.get_nome()}'?"),
+                actions=[
+                    botao_secundario("Cancelar", fechar_dialogo, largura=130),
+                    botao_perigo("Remover", excluir, largura=130),
                 ],
                 actions_alignment=ft.MainAxisAlignment.CENTER,
             )
@@ -1448,9 +1640,15 @@ def tela_principal(page: ft.Page):
                                               "Quantidade Atual": p.get_quantidade(),
                                               "Preço Unitário": f"R$ {p.get_preco_unitario():.2f}",
                                               "Estoque Mínimo Alerta": p.get_qtd_minima(),
-                                              "Status de Reposição": "🚨 CRÍTICO - REPOOR JÁ" if alerta else "✓ SEGURO"
+                                              "Status de Reposição": "🚨 CRÍTICO - REPOR JÁ" if alerta else "✓ SEGURO"
                                           }
-                                      ))
+                                      )),
+                        ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_color=VERDE_MEDIO,
+                                      tooltip="Editar",
+                                      on_click=lambda e, prod=p: abrir_cadastro(e, prod)),
+                        ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
+                                      tooltip="Remover",
+                                      on_click=lambda e, prod=p: confirmar_excluir_estoque(e, prod)),
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1484,7 +1682,6 @@ def tela_principal(page: ft.Page):
                 col_listagem.controls.append(ft.Text("Nenhum item em estoque corresponde aos critérios.", color=TEXTO_MEDIO))
             page.update()
 
-        # Filtro contendo categorias dinâmicas e o status crítico de alerta de baixo estoque
         barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar produto...", ["Ração", "Medicamento", "Higiene", "Acessório", "Abaixo Mínimo (Alerta)"], executar_busca_filtro)
         executar_busca_filtro(None)
 
@@ -1517,27 +1714,106 @@ def tela_principal(page: ft.Page):
             if dialogo_ref[0]:
                 fechar_dialogo_global(page, dialogo_ref[0])
 
-        def abrir_cadastro(e):
-            id_gerado     = proximo_id("servicos")
-            f_tipo       = dropdown_campo("Tipo", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"], largura=280)
-            f_preco      = campo_texto("Preço base (R$)", largura=280)
-            f_id_animal  = campo_texto("ID do animal", largura=280)
-            msg          = ft.Text("", color=ERRO, size=12)
+        def abrir_cadastro(e, servico=None):
+            editando = servico is not None
+            id_gerado = servico.get_id() if editando else proximo_id("servicos")
+
+            if editando:
+                # Edição de serviço (tipo e preço)
+                f_tipo   = dropdown_campo("Tipo", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"],
+                                          largura=280, valor=servico.get_tipo())
+                f_preco  = campo_texto("Preço base (R$)", largura=280, valor=str(servico.get_preco()))
+                msg      = ft.Text("", color=ERRO, size=12)
+
+                def salvar_edicao(e):
+                    if not f_tipo.value or not f_preco.value:
+                        msg.value = "Preencha todos os campos."
+                        page.update()
+                        return
+                    try:
+                        conn = banco.conectar()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE servicos SET tipo=?, preco=? WHERE id=?",
+                            (f_tipo.value, float(f_preco.value), id_gerado)
+                        )
+                        conn.commit()
+                        conn.close()
+                        serv_mem = next((s for s in Sistema.lista_servicos if s.get_id() == id_gerado), None)
+                        if serv_mem:
+                            serv_mem.set_tipo(f_tipo.value)
+                            serv_mem.set_preco(float(f_preco.value))
+                        banco.inserir_log(usuario_logado.get_nome(),
+                                          f"Edição de serviço ID {id_gerado}: {f_tipo.value}")
+                        snack(page, f"Serviço '{f_tipo.value}' atualizado!")
+                        fechar_dialogo()
+                        navegar("servicos")
+                    except Exception as ex:
+                        msg.value = f"Erro: {ex}"
+                        page.update()
+
+                dialogo_ref[0] = ft.AlertDialog(
+                    title=ft.Text("Editar Serviço", color=BRANCO, weight=ft.FontWeight.BOLD),
+                    bgcolor=VERDE_CLARO,
+                    content=ft.Container(
+                        border_radius=12,
+                        border=ft.Border.all(1.5, VERDE_MEDIO),
+                        padding=12,
+                        content=ft.Column(
+                            controls=[f_tipo, f_preco, msg],
+                            spacing=8,
+                            width=300,
+                            scroll=ft.ScrollMode.ALWAYS,
+                        ),
+                    ),
+                    actions=[
+                        botao_secundario("Cancelar", fechar_dialogo, largura=130),
+                        botao_primario("Salvar", salvar_edicao, largura=130),
+                    ],
+                    actions_alignment=ft.MainAxisAlignment.CENTER,
+                )
+                exibir_dialogo(page, dialogo_ref[0])
+                return
+
+            # Cadastro novo
+            f_tipo        = dropdown_campo("Tipo", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"], largura=280)
+            f_preco       = campo_texto("Preço base (R$)", largura=280)
+            f_id_animal   = campo_texto("ID do animal", largura=280)
+            f_id_func     = campo_texto("ID do funcionário responsável", largura=280,
+                                        valor=usuario_logado.get_id(),
+                                        hint=f"Padrão: você ({usuario_logado.get_id()})")
+            msg           = ft.Text("", color=ERRO, size=12)
 
             def salvar(e):
                 if not f_tipo.value or not f_preco.value or not f_id_animal.value:
                     msg.value = "Preencha todos os campos."
                     page.update()
                     return
+
+                val_id_animal = f_id_animal.value.strip()
+                val_id_func   = f_id_func.value.strip() or usuario_logado.get_id()
+
+                # ── Validação: animal deve existir ──────────────────
+                if not animal_existe(val_id_animal):
+                    msg.value = f"❌ Animal com ID '{val_id_animal}' não encontrado. Cadastre o animal primeiro."
+                    page.update()
+                    return
+
+                # ── Validação: funcionário deve existir ─────────────
+                if not funcionario_existe(val_id_func):
+                    msg.value = f"❌ Funcionário com ID '{val_id_func}' não encontrado."
+                    page.update()
+                    return
+
                 try:
                     serv = Servico(id_gerado, f_tipo.value,
-                                       float(f_preco.value), f_id_animal.value,
-                                       usuario_logado.get_id())
+                                       float(f_preco.value), val_id_animal,
+                                       val_id_func)
                     serv.registrar_servico()
                     Sistema.lista_servicos.append(serv)
                     banco.inserir_servico(serv)
                     banco.inserir_log(usuario_logado.get_nome(),
-                                      f"Serviço '{f_tipo.value}' para animal ID {f_id_animal.value}")
+                                      f"Serviço '{f_tipo.value}' para animal ID {val_id_animal} (func: {val_id_func})")
                     snack(page, f"Serviço '{f_tipo.value}' registrado!")
                     fechar_dialogo()
                     navegar("servicos")
@@ -1553,7 +1829,7 @@ def tela_principal(page: ft.Page):
                     border=ft.Border.all(1.5, VERDE_MEDIO),
                     padding=12,
                     content=ft.Column(
-                        controls=[f_tipo, f_preco, f_id_animal, msg],
+                        controls=[f_tipo, f_preco, f_id_animal, f_id_func, msg],
                         spacing=8,
                         width=300,
                         scroll=ft.ScrollMode.ALWAYS,
@@ -1567,7 +1843,41 @@ def tela_principal(page: ft.Page):
             )
             exibir_dialogo(page, dialogo_ref[0])
 
+        def confirmar_excluir_servico(e, servico):
+            if not usuario_logado.get_is_superuser():
+                snack(page, "Apenas administradores podem remover serviços.", erro=True)
+                return
+
+            def excluir(ev):
+                Sistema.lista_servicos.remove(servico)
+                conn = banco.conectar()
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM servicos WHERE id=?", (servico.get_id(),))
+                conn.commit()
+                conn.close()
+                banco.inserir_log(usuario_logado.get_nome(),
+                                  f"Remoção de serviço ID {servico.get_id()}: {servico.get_tipo()}")
+                snack(page, f"Serviço '{servico.get_tipo()}' removido.")
+                fechar_dialogo()
+                navegar("servicos")
+
+            dialogo_ref[0] = ft.AlertDialog(
+                title=ft.Text("Confirmar exclusão", color=ERRO),
+                content=ft.Text(f"Deseja remover o serviço '{servico.get_tipo()}' (ID: {servico.get_id()})?"),
+                actions=[
+                    botao_secundario("Cancelar", fechar_dialogo, largura=130),
+                    botao_perigo("Remover", excluir, largura=130),
+                ],
+                actions_alignment=ft.MainAxisAlignment.CENTER,
+            )
+            exibir_dialogo(page, dialogo_ref[0])
+
+        def nome_funcionario(id_func):
+            u = next((u for u in Sistema.lista_usuarios if u.get_id() == id_func), None)
+            return u.get_nome() if u else f"ID {id_func}"
+
         def linha_servico(s):
+            meu_servico = s.get_id_funcionario() == usuario_logado.get_id()
             return ft.Container(
                 content=ft.Row(
                     controls=[
@@ -1579,11 +1889,24 @@ def tela_principal(page: ft.Page):
                         ),
                         ft.Column(
                             controls=[
-                                ft.Text(s.get_tipo(), size=15,
-                                        weight=ft.FontWeight.W_600, color=TEXTO_ESCURO),
+                                ft.Row(
+                                    controls=[
+                                        ft.Text(s.get_tipo(), size=15,
+                                                weight=ft.FontWeight.W_600, color=TEXTO_ESCURO),
+                                        ft.Container(
+                                            content=ft.Text("meu", size=10, color=BRANCO, weight=ft.FontWeight.BOLD),
+                                            bgcolor=VERDE_MEDIO,
+                                            padding=ft.Padding.symmetric(horizontal=6, vertical=2),
+                                            border_radius=10,
+                                            visible=meu_servico,
+                                        ),
+                                    ],
+                                    spacing=6,
+                                ),
                                 ft.Text(
                                     f"Animal: {s.get_id_animal()} • "
                                     f"R$ {s.get_preco():.2f} • "
+                                    f"Func: {nome_funcionario(s.get_id_funcionario())} • "
                                     f"{s.get_data_hora().strftime('%d/%m/%Y %H:%M')}",
                                     size=12, color=TEXTO_MEDIO,
                                 ),
@@ -1598,15 +1921,22 @@ def tela_principal(page: ft.Page):
                                               "Tipo Procedimento": s.get_tipo(),
                                               "Valor Cobrado": f"R$ {s.get_preco():.2f}",
                                               "ID Identificador Animal": s.get_id_animal(),
-                                              "ID Funcionário Executor": s.get_id_funcionario(),
+                                              "Funcionário Responsável": nome_funcionario(s.get_id_funcionario()),
+                                              "ID Funcionário": s.get_id_funcionario(),
                                               "Data/Hora Abertura": s.get_data_hora().strftime('%d/%m/%Y às %H:%M:%S')
                                           }
-                                      ))
+                                      )),
+                        ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_color=VERDE_MEDIO,
+                                      tooltip="Editar",
+                                      on_click=lambda e, sv=s: abrir_cadastro(e, sv)),
+                        ft.IconButton(ft.Icons.DELETE_ROUNDED, icon_color=ERRO,
+                                      tooltip="Remover",
+                                      on_click=lambda e, sv=s: confirmar_excluir_servico(e, sv)),
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
-                bgcolor=BRANCO,
+                bgcolor=ft.Colors.with_opacity(0.06, VERDE_CLARO) if meu_servico else BRANCO,
                 border_radius=12,
                 padding=ft.Padding.symmetric(horizontal=16, vertical=12),
                 shadow=ft.BoxShadow(blur_radius=6,
@@ -1630,7 +1960,6 @@ def tela_principal(page: ft.Page):
                 col_listagem.controls.append(ft.Text("Nenhum histórico de serviço encontrado.", color=TEXTO_MEDIO))
             page.update()
 
-        # Filtro fixo por tipos catalogados de serviços executáveis
         barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar por tipo ou ID do animal...", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"], executar_busca_filtro)
         executar_busca_filtro(None)
 
@@ -1712,7 +2041,6 @@ def tela_principal(page: ft.Page):
                 col_listagem.controls.append(ft.Text("Nenhum registro de log localizado.", color=TEXTO_MEDIO))
             page.update()
 
-        # Coleta a lista completa de operadores de forma limpa para injetar no dropdown do filtro
         usuarios_unicos_sistema = list(set([l[1] for l in logs]))
         barra_comp, campo_b, drop_f = criar_barra_busca_filtros("Buscar termos contidos nas descrições de auditoria...", usuarios_unicos_sistema, executar_busca_filtro)
         executar_busca_filtro(None)
