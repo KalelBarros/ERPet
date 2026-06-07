@@ -48,6 +48,45 @@ usuario_logado = None
 # UTILITÁRIOS — Geração de IDs
 # ═══════════════════════════════════════════════════════════
 
+def validar_cpf(cpf: str) -> bool:
+    """Valida CPF brasileiro — aceita com ou sem formatação."""
+    import re
+    cpf = re.sub(r'[^0-9]', '', cpf)
+    if len(cpf) != 11 or cpf == cpf[0] * 11:
+        return False
+    for i in range(9, 11):
+        soma = sum(int(cpf[j]) * (i + 1 - j) for j in range(i))
+        if int(cpf[i]) != (soma * 10 % 11) % 10:
+            return False
+    return True
+
+def validar_email(email: str) -> bool:
+    """Valida formato básico de e-mail."""
+    import re
+    return bool(re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email.strip()))
+
+def validar_telefone(tel: str) -> bool:
+    """Valida telefone brasileiro: (XX) XXXXX-XXXX ou variações."""
+    import re
+    tel = re.sub(r'[^0-9]', '', tel)
+    return len(tel) in (10, 11)
+
+def formatar_cpf(cpf: str) -> str:
+    """Formata CPF como XXX.XXX.XXX-XX."""
+    import re
+    cpf = re.sub(r'[^0-9]', '', cpf)
+    return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}" if len(cpf) == 11 else cpf
+
+def formatar_telefone(tel: str) -> str:
+    """Formata telefone como (XX) XXXXX-XXXX."""
+    import re
+    tel = re.sub(r'[^0-9]', '', tel)
+    if len(tel) == 11:
+        return f"({tel[:2]}) {tel[2:7]}-{tel[7:]}"
+    if len(tel) == 10:
+        return f"({tel[:2]}) {tel[2:6]}-{tel[6:]}"
+    return tel
+
 def proximo_id(tabela):
     """Gera o próximo ID numérico baseado no banco de dados."""
     conn = banco.conectar()
@@ -227,8 +266,22 @@ def fechar_dialogo_global(page, dialog=None):
 
 
 def emoji_tipo(tipo):
-    """Emoji para cada tipo de animal."""
-    return {"Canino": "🐶", "Felino": "🐱", "Ave": "🐦", "Roedor": "🐹"}.get(tipo, "🐾")
+    """Emoji para cada tipo de entidade do sistema."""
+    mapa = {
+        # Animais
+        "Canino": "🐶", "Felino": "🐱", "Ave": "🐦", "Roedor": "🐹",
+        # Serviços
+        "Banho": "🚿", "Tosa": "✂️", "Banho+Tosa": "🛁", "Vacina": "💉",
+        "Consulta": "🩺", "Cirurgia": "🔬",
+        # Estoque — categorias
+        "Ração": "🥣", "Medicamento": "💊", "Higiene": "🧴", "Acessório": "🪮",
+        "Geral": "📦",
+        # Usuários
+        "Administrador": "👑", "Funcionário": "👤",
+        # Status estoque
+        "OK": "✅", "Alerta": "⚠️",
+    }
+    return mapa.get(tipo, "🐾")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -679,7 +732,23 @@ def tela_principal(page: ft.Page):
                 ],
                 spacing=16,
             ),
-            ft.Container(height=24),
+            ft.Container(height=16),
+            *([card(
+                ft.Column(controls=[
+                    ft.Row(controls=[
+                        ft.Icon(ft.Icons.WARNING_ROUNDED, color=ERRO),
+                        ft.Text("⚠️ Produtos com estoque baixo!", size=15,
+                                weight=ft.FontWeight.BOLD, color=ERRO),
+                    ], spacing=8),
+                    ft.Divider(height=10),
+                    *[ft.Row(controls=[
+                        ft.Text(f"• {p.get_nome()}", size=13, color=TEXTO_ESCURO, expand=True),
+                        ft.Text(f"Qtd: {p.get_quantidade()} / mín: {p.get_qtd_minima()}",
+                                size=12, color=ERRO, weight=ft.FontWeight.W_600),
+                    ]) for p in Sistema.lista_estoque if p.get_quantidade() <= p.get_qtd_minima()],
+                ], spacing=6),
+            )] if any(p.get_quantidade() <= p.get_qtd_minima() for p in Sistema.lista_estoque) else []),
+            ft.Container(height=16),
             card(
                 ft.Column(
                     controls=[
@@ -731,6 +800,21 @@ def tela_principal(page: ft.Page):
                     page.update()
                     return
 
+                if f_cpf.value and not validar_cpf(f_cpf.value):
+                    msg.value = "CPF inválido. Use o formato XXX.XXX.XXX-XX."
+                    page.update()
+                    return
+
+                if f_email.value and not validar_email(f_email.value):
+                    msg.value = "E-mail inválido."
+                    page.update()
+                    return
+
+                if f_telefone.value and not validar_telefone(f_telefone.value):
+                    msg.value = "Telefone inválido. Use (XX) XXXXX-XXXX."
+                    page.update()
+                    return
+
                 if editando:
                     mapa = {
                         "set_nome": f_nome.value,
@@ -772,10 +856,6 @@ def tela_principal(page: ft.Page):
             exibir_dialogo(page, dialogo_ref[0])
 
         def confirmar_excluir(e, cliente):
-            if not usuario_logado.get_is_superuser():
-                snack(page, "Apenas administradores podem remover.", erro=True)
-                return
-
             def excluir(e):
                 Sistema.Excluir(Sistema.lista_clientes, cliente.get_id(), usuario_logado)
                 snack(page, f"Cliente '{cliente.get_nome()}' removido.")
@@ -807,6 +887,10 @@ def tela_principal(page: ft.Page):
                             controls=[
                                 ft.Text(c.get_nome(), size=15, weight=ft.FontWeight.W_600, color=TEXTO_ESCURO),
                                 ft.Text(f"CPF: {c.get_cpf()} • {c.get_email()}", size=12, color=TEXTO_MEDIO),
+                                ft.Text(
+                                    f"🐾 {sum(1 for a in Sistema.lista_animais if a.get_id_dono() == c.get_id())} animal(is) cadastrado(s)",
+                                    size=11, color=VERDE_MEDIO,
+                                ),
                             ],
                             spacing=2,
                             expand=True,
@@ -814,14 +898,19 @@ def tela_principal(page: ft.Page):
                         ft.Row(
                             controls=[
                                 ft.IconButton(ft.Icons.ZOOM_IN_ROUNDED, icon_color=VERDE_ESCURO,
-                                              tooltip="Ver Detalhes", on_click=lambda e: mostrar_modal_detalhes(
+                                              tooltip="Ver Detalhes", on_click=lambda e, cli=c: mostrar_modal_detalhes(
                                                   "Dados do Cliente", {
-                                                      "ID": c.get_id(),
-                                                      "Nome": c.get_nome(),
-                                                      "CPF": c.get_cpf(),
-                                                      "E-mail": c.get_email(),
-                                                      "Telefone": c.get_telefone(),
-                                                      "Endereço": c.get_endereco()
+                                                      "ID": cli.get_id(),
+                                                      "Nome": cli.get_nome(),
+                                                      "CPF": cli.get_cpf(),
+                                                      "E-mail": cli.get_email(),
+                                                      "Telefone": cli.get_telefone(),
+                                                      "Endereço": cli.get_endereco(),
+                                                      "Animais cadastrados": ", ".join(
+                                                          f"{emoji_tipo(type(a).__name__)} {a.get_nome()} ({type(a).__name__})"
+                                                          for a in Sistema.lista_animais
+                                                          if a.get_id_dono() == cli.get_id()
+                                                      ) or "Nenhum animal cadastrado"
                                                   }
                                               )),
                                 ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_color=VERDE_MEDIO,
@@ -1120,10 +1209,6 @@ def tela_principal(page: ft.Page):
             exibir_dialogo(page, dialogo_ref[0])
 
         def confirmar_excluir(e, animal):
-            if not usuario_logado.get_is_superuser():
-                snack(page, "Apenas administradores podem remover.", erro=True)
-                return
-
             def excluir(ev):
                 Sistema.Excluir(Sistema.lista_animais, animal.get_id(), usuario_logado)
                 snack(page, f"Animal '{animal.get_nome()}' removido.")
@@ -1295,6 +1380,21 @@ def tela_principal(page: ft.Page):
                     page.update()
                     return
 
+                if f_cpf.value and not validar_cpf(f_cpf.value):
+                    msg.value = "CPF inválido. Use o formato XXX.XXX.XXX-XX."
+                    page.update()
+                    return
+
+                if f_email.value and not validar_email(f_email.value):
+                    msg.value = "E-mail inválido."
+                    page.update()
+                    return
+
+                if f_tel.value and not validar_telefone(f_tel.value):
+                    msg.value = "Telefone inválido. Use (XX) XXXXX-XXXX."
+                    page.update()
+                    return
+
                 if editando:
                     campos_edicao = {
                         "set_nome": f_nome.value,
@@ -1378,7 +1478,7 @@ def tela_principal(page: ft.Page):
                 content=ft.Row(
                     controls=[
                         ft.Container(
-                            content=ft.Text("👑" if is_adm else "👤", size=24),
+                            content=ft.Text(emoji_tipo("Administrador") if is_adm else emoji_tipo("Funcionário"), size=24),
                             bgcolor=BEGE,
                             border_radius=10,
                             padding=10,
@@ -1576,10 +1676,6 @@ def tela_principal(page: ft.Page):
             exibir_dialogo(page, dialogo_ref[0])
 
         def confirmar_excluir_estoque(e, produto):
-            if not usuario_logado.get_is_superuser():
-                snack(page, "Apenas administradores podem remover.", erro=True)
-                return
-
             def excluir(ev):
                 Sistema.lista_estoque.remove(produto)
                 banco.excluir_estoque(produto.get_id())
@@ -1605,7 +1701,7 @@ def tela_principal(page: ft.Page):
                 content=ft.Row(
                     controls=[
                         ft.Container(
-                            content=ft.Text("📦", size=24),
+                            content=ft.Text(emoji_tipo(p.get_categoria()), size=24),
                             bgcolor=BEGE,
                             border_radius=10,
                             padding=10,
@@ -1779,10 +1875,40 @@ def tela_principal(page: ft.Page):
             f_tipo        = dropdown_campo("Tipo", ["Banho", "Tosa", "Banho+Tosa", "Vacina", "Consulta"], largura=280)
             f_preco       = campo_texto("Preço base (R$)", largura=280)
             f_id_animal   = campo_texto("ID do animal", largura=280)
+            info_animal   = ft.Text("", color=VERDE_ESCURO, size=12, italic=True)
             f_id_func     = campo_texto("ID do funcionário responsável", largura=280,
                                         valor=usuario_logado.get_id(),
                                         hint=f"Padrão: você ({usuario_logado.get_id()})")
+            info_func     = ft.Text("", color=VERDE_ESCURO, size=12, italic=True)
             msg           = ft.Text("", color=ERRO, size=12)
+
+            def ao_digitar_animal(e):
+                id_ani = f_id_animal.value.strip()
+                ani = next((a for a in Sistema.lista_animais if a.get_id() == id_ani), None)
+                if ani:
+                    dono = next((cl for cl in Sistema.lista_clientes if cl.get_id() == ani.get_id_dono()), None)
+                    nome_dono = dono.get_nome() if dono else "Dono não encontrado"
+                    info_animal.value = f"✔ {type(ani).__name__}: {ani.get_nome()} — Dono: {nome_dono}"
+                    info_animal.color = VERDE_ESCURO
+                else:
+                    info_animal.value = "❌ Animal não encontrado" if id_ani else ""
+                    info_animal.color = ERRO
+                page.update()
+
+            def ao_digitar_func(e):
+                id_fn = f_id_func.value.strip()
+                fn = next((u for u in Sistema.lista_usuarios if u.get_id() == id_fn), None)
+                if fn:
+                    cargo = "Admin" if fn.get_is_superuser() else "Funcionário"
+                    info_func.value = f"✔ {fn.get_nome()} ({cargo})"
+                    info_func.color = VERDE_ESCURO
+                else:
+                    info_func.value = "❌ Funcionário não encontrado" if id_fn else ""
+                    info_func.color = ERRO
+                page.update()
+
+            f_id_animal.on_change = ao_digitar_animal
+            f_id_func.on_change   = ao_digitar_func
 
             def salvar(e):
                 if not f_tipo.value or not f_preco.value or not f_id_animal.value:
@@ -1829,7 +1955,7 @@ def tela_principal(page: ft.Page):
                     border=ft.Border.all(1.5, VERDE_MEDIO),
                     padding=12,
                     content=ft.Column(
-                        controls=[f_tipo, f_preco, f_id_animal, f_id_func, msg],
+                        controls=[f_tipo, f_preco, f_id_animal, info_animal, f_id_func, info_func, msg],
                         spacing=8,
                         width=300,
                         scroll=ft.ScrollMode.ALWAYS,
@@ -1882,7 +2008,7 @@ def tela_principal(page: ft.Page):
                 content=ft.Row(
                     controls=[
                         ft.Container(
-                            content=ft.Text("🔧", size=24),
+                            content=ft.Text(emoji_tipo(s.get_tipo()), size=24),
                             bgcolor=BEGE,
                             border_radius=10,
                             padding=10,
@@ -1904,7 +2030,8 @@ def tela_principal(page: ft.Page):
                                     spacing=6,
                                 ),
                                 ft.Text(
-                                    f"Animal: {s.get_id_animal()} • "
+                                    f"{emoji_tipo(s.get_tipo())} "
+                                    f"Animal: {next((a.get_nome() for a in Sistema.lista_animais if a.get_id() == s.get_id_animal()), s.get_id_animal())} • "
                                     f"R$ {s.get_preco():.2f} • "
                                     f"Func: {nome_funcionario(s.get_id_funcionario())} • "
                                     f"{s.get_data_hora().strftime('%d/%m/%Y %H:%M')}",
@@ -1966,7 +2093,7 @@ def tela_principal(page: ft.Page):
         area_conteudo.controls += [
             ft.Row(
                 controls=[
-                    titulo_secao("🔧 Serviços"),
+                    titulo_secao("🩺 Serviços"),
                     ft.Row(expand=True),
                     botao_primario("+ Novo Serviço", abrir_cadastro, largura=160),
                 ],

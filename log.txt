@@ -160,3 +160,36 @@
 [2026-06-06 17:22:04] admin - Login no sistema
 [2026-06-06 18:30:36] admin - Login no sistema
 [2026-06-06 18:53:41] admin - Login no sistema
+[2026-06-06 23:29:57] admin - Login no sistema
+[2026-06-06 23:30:19] admin - Edição de serviço ID 1: Banho
+[2026-06-06 23:30:43] admin - Logout
+[2026-06-06 23:30:48] Fulano - Login no sistema
+[2026-06-06 23:32:39] Fulano - Cadastro de animal: asd (Felino)
+[2026-06-06 23:33:08] Fulano - Logout
+[2026-06-06 23:33:13] admin - Login no sistema
+[2026-06-06 23:33:40] admin - Remoção de serviço ID 1: Banho
+[2026-06-06 23:34:16] admin - Serviço 'Banho' para animal ID 1 (func: 2)
+[2026-06-06 23:34:27] admin - Logout
+[2026-06-06 23:34:31] Fulano - Login no sistema
+[2026-06-06 23:34:59] Fulano - Logout
+[2026-06-06 23:35:05] admin - Login no sistema
+[2026-06-06 23:35:33] admin - Cadastro de usuário: Fulano2 (Funcionario)
+[2026-06-06 23:35:49] admin - Serviço 'Vacina' para animal ID 2 (func: 3)
+[2026-06-06 23:35:58] admin - Logout
+[2026-06-06 23:36:04] Fulano2 - Login no sistema
+[2026-06-06 23:38:40] admin - Login no sistema
+[2026-06-06 23:45:03] admin - Login no sistema
+[2026-06-06 23:45:34] admin - Cadastro de cliente: asd
+[2026-06-06 23:47:17] admin - Login no sistema
+[2026-06-07 00:31:17] admin - Login no sistema
+[2026-06-07 00:33:43] admin - Remoção de Funcionario ID '3': Fulano2
+[2026-06-07 00:34:29] admin - Logout
+[2026-06-07 00:34:40] Fulano - Login no sistema
+[2026-06-07 00:35:26] Fulano - Edição de produto: Ração de cachorro
+[2026-06-07 00:39:58] Fulano - Logout
+[2026-06-07 00:40:03] admin - Login no sistema
+[2026-06-07 01:48:11] admin - Login no sistema
+[2026-06-07 01:52:37] admin - Login no sistema
+[2026-06-07 01:55:20] admin - Cadastro de cliente: Asdasd
+[2026-06-07 01:55:39] admin - Logout
+[2026-06-07 01:55:50] Fulano - Login no sistema
